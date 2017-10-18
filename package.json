@@ -17,6 +17,9 @@
     "ios/RCTVLCPlayer/RCTVLCPlayerManager.m",
     "VLCPlayer.js"
   ],
+  "scripts": {
+    "test:fix": "standard --fix"
+  },
   "author": {
     "name": "kirill gusyatin",
     "email": "kirill.gus@gmail.com"
@@ -27,8 +30,7 @@
     "url": "https://github.com/kikill95/react-native-vlc-player"
   },
   "devDependencies": {
-
+    "standard": "^10.0.3"
   },
-  "dependencies": {
-  }
+  "dependencies": {}
 }

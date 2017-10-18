@@ -1,8 +1,8 @@
-# react-native-vlcplayer
+# react-native-vlc-player
 
 A `<VLCPlayer>` component for react-native
 
-Based on [react-native-vlcplayer](https://github.com/xiongchuan86/react-native-vlcplayer) from xiongchuan86
+Based on [react-native-vlcplayer](https://github.com/xiongchuan86/react-native-vlcplayer) from [xiongchuan86](https://github.com/xiongchuan86)
 
 ### Add it to your project
 
