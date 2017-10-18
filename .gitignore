@@ -1,0 +1,7 @@
+node_modules/**/*
+ios/RCTVLCPlayer.xcodeproj/xcuserdata/**/*
+ios/RCTVLCPlayer.xcodeproj/project.xcworkspace/**/*
+npm-debug.log
+.DS_Store
+build/
+.gradle/
