@@ -242,9 +242,9 @@
 		0CA30C4E1D07E0DB003B09F9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../../../ios/Pods/MobileVLCKit/MobileVLCKit-binary";
+				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../../../ios/Pods/MobileVLCKit-unstable/MobileVLCKit-binary";
 				HEADER_SEARCH_PATHS = (
-					"$(SRCROOT)/../../../ios/Pods/MobileVLCKit/MobileVLCKit-binary/MobileVLCKit.framework/Headers/**",
+					"$(SRCROOT)/../../../ios/Pods/MobileVLCKit-unstable/MobileVLCKit-binary/MobileVLCKit.framework/Headers/**",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../../react-native/React/**",
 					"$(SRCROOT)/node_modules/react-native/React/**",
@@ -265,9 +265,9 @@
 		0CA30C4F1D07E0DB003B09F9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../../../ios/Pods/MobileVLCKit/MobileVLCKit-binary";
+				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../../../ios/Pods/MobileVLCKit-unstable/MobileVLCKit-binary";
 				HEADER_SEARCH_PATHS = (
-					"$(SRCROOT)/../../../ios/Pods/MobileVLCKit/MobileVLCKit-binary/MobileVLCKit.framework/Headers/**",
+					"$(SRCROOT)/../../../ios/Pods/MobileVLCKit-unstable/MobileVLCKit-binary/MobileVLCKit.framework/Headers/**",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../../react-native/React/**",
 					"$(SRCROOT)/node_modules/react-native/React/**",
