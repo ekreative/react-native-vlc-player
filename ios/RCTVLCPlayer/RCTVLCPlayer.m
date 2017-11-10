@@ -15,12 +15,14 @@ static NSString *const playbackRate = @"rate";
 
   /* Required to publish events */
     RCTEventDispatcher *_eventDispatcher;
-    VLCMediaPlayer *_player;
+//    VLCMediaPlayer *_player;
 
     BOOL _paused;
     BOOL _started;
 
 }
+
+static VLCMediaPlayer *_player = nil;
 
 - (instancetype)initWithEventDispatcher:(RCTEventDispatcher *)eventDispatcher
 {
@@ -45,7 +47,7 @@ static NSString *const playbackRate = @"rate";
 - (VLCMediaPlayer*)sharedPlayer {
     @synchronized(self) {
         if (!_player) {
-            _sharedInstance = [[VLCMediaPlayer alloc] init];
+            _player = [[VLCMediaPlayer alloc] init];
         }
     }
     return _player;
