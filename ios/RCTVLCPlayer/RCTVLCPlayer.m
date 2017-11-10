@@ -22,7 +22,9 @@ static NSString *const playbackRate = @"rate";
 
 }
 
+
 static VLCMediaPlayer *_player = nil;
+
 
 - (instancetype)initWithEventDispatcher:(RCTEventDispatcher *)eventDispatcher
 {
@@ -73,7 +75,6 @@ static VLCMediaPlayer *_player = nil;
 
 - (void)setPaused:(BOOL)paused
 {
-    //NSLog(@">>>>paused %i",paused);
     if(self.sharedPlayer){
         if(!_started)
             [self play];
@@ -126,21 +127,18 @@ static VLCMediaPlayer *_player = nil;
     switch (state) {
         case VLCMediaPlayerStatePaused:
             _paused = YES;
-            //NSLog(@"VLCMediaPlayerStatePaused %i",VLCMediaPlayerStatePaused);
             [_eventDispatcher sendInputEventWithName:@"onVideoPaused"
                                                 body:@{
                                                        @"target": self.reactTag
                                                        }];
             break;
         case VLCMediaPlayerStateStopped:
-            //NSLog(@"VLCMediaPlayerStateStopped %i",VLCMediaPlayerStateStopped);
             [_eventDispatcher sendInputEventWithName:@"onVideoStopped"
                                                 body:@{
                                                        @"target": self.reactTag
                                                        }];
             break;
         case VLCMediaPlayerStateBuffering:
-            //NSLog(@"VLCMediaPlayerStateBuffering %i",VLCMediaPlayerStateBuffering);
             [_eventDispatcher sendInputEventWithName:@"onVideoBuffering"
                                                 body:@{
                                                        @"target": self.reactTag
@@ -148,7 +146,6 @@ static VLCMediaPlayer *_player = nil;
             break;
         case VLCMediaPlayerStatePlaying:
             _paused = NO;
-            //NSLog(@"VLCMediaPlayerStatePlaying %i",VLCMediaPlayerStatePlaying);
             [_eventDispatcher sendInputEventWithName:@"onVideoPlaying"
                                                 body:@{
                                                        @"target": self.reactTag,
@@ -157,22 +154,19 @@ static VLCMediaPlayer *_player = nil;
                                                        }];
             break;
         case VLCMediaPlayerStateEnded:
-            //NSLog(@"VLCMediaPlayerStateEnded %i",VLCMediaPlayerStateEnded);
             [_eventDispatcher sendInputEventWithName:@"onVideoEnded"
                                                 body:@{
                                                        @"target": self.reactTag
                                                        }];
             break;
         case VLCMediaPlayerStateError:
-            //NSLog(@"VLCMediaPlayerStateError %i",VLCMediaPlayerStateError);
             [_eventDispatcher sendInputEventWithName:@"onVideoError"
                                                 body:@{
                                                        @"target": self.reactTag
                                                        }];
-            [self _release];
+//            [self _release];
             break;
         default:
-            //NSLog(@"state %i",state);
             break;
     }
 }
@@ -234,7 +228,10 @@ static VLCMediaPlayer *_player = nil;
     [self.sharedPlayer stop];
 //    self.sharedPlayer = nil;
     _eventDispatcher = nil;
+    _player.drawable = nil;
+    _player.delegate = nil;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+    _player = nil;
 }
 
 #pragma mark - Lifecycle
