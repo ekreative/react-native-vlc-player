@@ -42,6 +42,15 @@ static NSString *const playbackRate = @"rate";
   return self;
 }
 
+- (VLCMediaPlayer*)sharedPlayer {
+    @synchronized(self) {
+        if (!_player) {
+            _sharedInstance = [[VLCMediaPlayer alloc] init];
+        }
+    }
+    return _player;
+}
+
 - (void)applicationWillResignActive:(NSNotification *)notification
 {
     if (!_paused) {
@@ -63,11 +72,11 @@ static NSString *const playbackRate = @"rate";
 - (void)setPaused:(BOOL)paused
 {
     //NSLog(@">>>>paused %i",paused);
-    if(_player){
+    if(self.sharedPlayer){
         if(!_started)
             [self play];
         else {
-            [_player pause];
+            [self.sharedPlayer pause];
             _paused = paused;
         }
     }
@@ -75,8 +84,8 @@ static NSString *const playbackRate = @"rate";
 
 -(void)play
 {
-    if(_player){
-        [_player play];
+    if(self.sharedPlayer){
+        [self.sharedPlayer play];
         _paused = NO;
         _started = YES;
     }
@@ -84,22 +93,22 @@ static NSString *const playbackRate = @"rate";
 
 -(void)setSource:(NSDictionary *)source
 {
-    if(_player){
-        [self _release];
-    }
+//    if(self.sharedPlayer){
+//        [self _release];
+//    }
     NSArray* options = [source objectForKey:@"initOptions"];
     NSString* uri    = [source objectForKey:@"uri"];
     BOOL    autoplay = [RCTConvert BOOL:[source objectForKey:@"autoplay"]];
     NSURL* _uri    = [NSURL URLWithString:uri];
 
     //init player && play
-    _player = [[VLCMediaPlayer alloc] initWithOptions:options];
-    [_player setDrawable:self];
-    _player.delegate = self;
+//    _player = [[VLCMediaPlayer alloc] initWithOptions:options];
+    [self.sharedPlayer setDrawable:self];
+    self.sharedPlayer.delegate = self;
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(mediaPlayerStateChanged:) name:VLCMediaPlayerStateChanged object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(mediaPlayerTimeChanged:) name:VLCMediaPlayerTimeChanged object:nil];
-    _player.media = [VLCMedia mediaWithURL:_uri];
+    self.sharedPlayer.media = [VLCMedia mediaWithURL:_uri];
     if(autoplay)
         [self play];
 }
@@ -111,7 +120,7 @@ static NSString *const playbackRate = @"rate";
 
 - (void)mediaPlayerStateChanged:(NSNotification *)aNotification
 {
-    VLCMediaPlayerState state = _player.state;
+    VLCMediaPlayerState state = self.sharedPlayer.state;
     switch (state) {
         case VLCMediaPlayerStatePaused:
             _paused = YES;
@@ -141,8 +150,8 @@ static NSString *const playbackRate = @"rate";
             [_eventDispatcher sendInputEventWithName:@"onVideoPlaying"
                                                 body:@{
                                                        @"target": self.reactTag,
-                                                       @"seekable": [NSNumber numberWithBool:[_player isSeekable]],
-                                                       @"duration":[NSNumber numberWithInt:[_player.media.length intValue]]
+                                                       @"seekable": [NSNumber numberWithBool:[self.sharedPlayer isSeekable]],
+                                                       @"duration":[NSNumber numberWithInt:[self.sharedPlayer.media.length intValue]]
                                                        }];
             break;
         case VLCMediaPlayerStateEnded:
@@ -169,9 +178,9 @@ static NSString *const playbackRate = @"rate";
 -(void)updateVideoProgress
 {
 
-    int currentTime   = [[_player time] intValue];
-    int remainingTime = [[_player remainingTime] intValue];
-    int duration      = [_player.media.length intValue];
+    int currentTime   = [[self.sharedPlayer time] intValue];
+    int remainingTime = [[self.sharedPlayer remainingTime] intValue];
+    int duration      = [self.sharedPlayer.media.length intValue];
 
     if( currentTime >= 0 && currentTime < duration) {
         [_eventDispatcher sendInputEventWithName:@"onVideoProgress"
@@ -180,48 +189,48 @@ static NSString *const playbackRate = @"rate";
                                                    @"currentTime": [NSNumber numberWithInt:currentTime],
                                                    @"remainingTime": [NSNumber numberWithInt:remainingTime],
                                                    @"duration":[NSNumber numberWithInt:duration],
-                                                   @"position":[NSNumber numberWithFloat:_player.position]
+                                                   @"position":[NSNumber numberWithFloat:self.sharedPlayer.position]
                                                    }];
     }
 }
 
 - (void)jumpBackward:(int)interval
 {
-    if(interval>=0 && interval <= [_player.media.length intValue])
-        [_player jumpBackward:interval];
+    if(interval>=0 && interval <= [self.sharedPlayer.media.length intValue])
+        [self.sharedPlayer jumpBackward:interval];
 }
 
 - (void)jumpForward:(int)interval
 {
-    if(interval>=0 && interval <= [_player.media.length intValue])
-        [_player jumpForward:interval];
+    if(interval>=0 && interval <= [self.sharedPlayer.media.length intValue])
+        [self.sharedPlayer jumpForward:interval];
 }
 
 -(void)setSeek:(float)pos
 {
-    if([_player isSeekable]){
+    if([self.sharedPlayer isSeekable]){
         if(pos>=0 && pos <= 1){
-            [_player setPosition:pos];
+            [self.sharedPlayer setPosition:pos];
         }
     }
 }
 
 -(void)setSnapshotPath:(NSString*)path
 {
-  if(_player)
-    [_player saveVideoSnapshotAt:path withWidth:0 andHeight:0];
+  if(self.sharedPlayer)
+    [self.sharedPlayer saveVideoSnapshotAt:path withWidth:0 andHeight:0];
 }
 
 -(void)setRate:(float)rate
 {
-    [_player setRate:rate];
+    [self.sharedPlayer setRate:rate];
 }
 
 - (void)_release
 {
-    [_player pause];
-    [_player stop];
-    _player = nil;
+    [self.sharedPlayer pause];
+    [self.sharedPlayer stop];
+//    self.sharedPlayer = nil;
     _eventDispatcher = nil;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
