@@ -22,6 +22,10 @@ static NSString *const playbackRate = @"rate";
 
 }
 
+- (void)dealloc {
+
+}
+
 - (instancetype)initWithEventDispatcher:(RCTEventDispatcher *)eventDispatcher
 {
   if ((self = [super init])) {
@@ -62,7 +66,6 @@ static NSString *const playbackRate = @"rate";
 
 - (void)setPaused:(BOOL)paused
 {
-    //NSLog(@">>>>paused %i",paused);
     if(_player){
         if(!_started)
             [self play];
@@ -94,8 +97,8 @@ static NSString *const playbackRate = @"rate";
 
     //init player && play
     _player = [[VLCMediaPlayer alloc] initWithOptions:options];
-    [_player setDrawable:self];
     _player.delegate = self;
+    _player.drawable = self;
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(mediaPlayerStateChanged:) name:VLCMediaPlayerStateChanged object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(mediaPlayerTimeChanged:) name:VLCMediaPlayerTimeChanged object:nil];
@@ -115,21 +118,18 @@ static NSString *const playbackRate = @"rate";
     switch (state) {
         case VLCMediaPlayerStatePaused:
             _paused = YES;
-            //NSLog(@"VLCMediaPlayerStatePaused %i",VLCMediaPlayerStatePaused);
             [_eventDispatcher sendInputEventWithName:@"onVideoPaused"
                                                 body:@{
                                                        @"target": self.reactTag
                                                        }];
             break;
         case VLCMediaPlayerStateStopped:
-            //NSLog(@"VLCMediaPlayerStateStopped %i",VLCMediaPlayerStateStopped);
             [_eventDispatcher sendInputEventWithName:@"onVideoStopped"
                                                 body:@{
                                                        @"target": self.reactTag
                                                        }];
             break;
         case VLCMediaPlayerStateBuffering:
-            //NSLog(@"VLCMediaPlayerStateBuffering %i",VLCMediaPlayerStateBuffering);
             [_eventDispatcher sendInputEventWithName:@"onVideoBuffering"
                                                 body:@{
                                                        @"target": self.reactTag
@@ -137,7 +137,6 @@ static NSString *const playbackRate = @"rate";
             break;
         case VLCMediaPlayerStatePlaying:
             _paused = NO;
-            //NSLog(@"VLCMediaPlayerStatePlaying %i",VLCMediaPlayerStatePlaying);
             [_eventDispatcher sendInputEventWithName:@"onVideoPlaying"
                                                 body:@{
                                                        @"target": self.reactTag,
@@ -146,22 +145,19 @@ static NSString *const playbackRate = @"rate";
                                                        }];
             break;
         case VLCMediaPlayerStateEnded:
-            //NSLog(@"VLCMediaPlayerStateEnded %i",VLCMediaPlayerStateEnded);
             [_eventDispatcher sendInputEventWithName:@"onVideoEnded"
                                                 body:@{
                                                        @"target": self.reactTag
                                                        }];
             break;
         case VLCMediaPlayerStateError:
-            //NSLog(@"VLCMediaPlayerStateError %i",VLCMediaPlayerStateError);
             [_eventDispatcher sendInputEventWithName:@"onVideoError"
                                                 body:@{
                                                        @"target": self.reactTag
                                                        }];
-            [self _release];
+//            [self _release];
             break;
         default:
-            //NSLog(@"state %i",state);
             break;
     }
 }
@@ -170,7 +166,6 @@ static NSString *const playbackRate = @"rate";
 {
 
     int currentTime   = [[_player time] intValue];
-    int remainingTime = [[_player remainingTime] intValue];
     int duration      = [_player.media.length intValue];
 
     if( currentTime >= 0 && currentTime < duration) {
@@ -178,7 +173,7 @@ static NSString *const playbackRate = @"rate";
                                             body:@{
                                                    @"target": self.reactTag,
                                                    @"currentTime": [NSNumber numberWithInt:currentTime],
-                                                   @"remainingTime": [NSNumber numberWithInt:remainingTime],
+                                                   @"remainingTime": [NSNumber numberWithInt:_player.remainingTime],
                                                    @"duration":[NSNumber numberWithInt:duration],
                                                    @"position":[NSNumber numberWithFloat:_player.position]
                                                    }];
@@ -221,9 +216,11 @@ static NSString *const playbackRate = @"rate";
 {
     [_player pause];
     [_player stop];
-    _player = nil;
     _eventDispatcher = nil;
+    _player.drawable = nil;
+    _player.delegate = nil;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+    _player = nil;
 }
 
 #pragma mark - Lifecycle
