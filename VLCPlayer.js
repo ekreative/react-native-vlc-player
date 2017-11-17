@@ -92,7 +92,6 @@ export default class VLCPlayer extends Component {
     } = this.props
     source.initOptions = source.initOptions || []
     // repeat the input media
-    source.initOptions.push('--input-repeat=1000')
     const nativeProps = Object.assign({}, this.props)
     Object.assign(nativeProps, {
       style: [styles.base, nativeProps.style],

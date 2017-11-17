@@ -118,6 +118,7 @@ static NSString *const playbackRate = @"rate";
             }
             break;
         case VLCMediaPlayerStateEnded:
+            [self.player stop];
             if (self.onEnded) {
                 self.onEnded(@{ @"target": self.reactTag });
             }
@@ -151,6 +152,16 @@ static NSString *const playbackRate = @"rate";
 }
 
 
+- (void)callOnEndCallbacks {
+    if (self.onEnded) {
+        self.onEnded(@{ @"target": self.reactTag });
+    }
+    if (self.onStopped) {
+        self.onStopped(@{ @"target": self.reactTag });
+    }
+}
+
+
 - (void)jumpBackward:(int)interval {
     if(interval>=0 && interval <= [self.player.media.length intValue]) {
         [self.player jumpBackward:interval];
@@ -167,7 +178,7 @@ static NSString *const playbackRate = @"rate";
 
 - (void)setSeek:(float)pos {
     if([self.player isSeekable]) {
-        if(pos>=0 && pos <= 1){
+        if(pos >= 0 && pos <= 1.0) {
             [self.player setPosition:pos];
         }
     }
@@ -196,7 +207,7 @@ static NSString *const playbackRate = @"rate";
 #pragma mark - Lifecycle
 - (void)removeFromSuperview {
     [self _release];
-   [super removeFromSuperview];
+    [super removeFromSuperview];
 }
 
 @end
