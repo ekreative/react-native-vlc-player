@@ -1,9 +1,9 @@
 import React from 'react'
 import ReactNative from 'react-native'
+import PropTypes from 'prop-types'
 
 const {
-  Component,
-  PropTypes
+  Component
 } = React
 
 const {
@@ -97,13 +97,13 @@ export default class VLCPlayer extends Component {
     Object.assign(nativeProps, {
       style: [styles.base, nativeProps.style],
       source: source,
-      onVideoError: this._onError,
-      onVideoProgress: this._onProgress,
-      onVideoEnded: this._onEnded,
-      onVideoPlaying: this._onPlaying,
-      onVideoPaused: this._onPaused,
-      onVideoStopped: this._onStopped,
-      onVideoBuffering: this._onBuffering
+      onError: this._onError,
+      onProgress: this._onProgress,
+      onEnded: this._onEnded,
+      onPlaying: this._onPlaying,
+      onPaused: this._onPaused,
+      onStopped: this._onStopped,
+      onBuffering: this._onBuffering
     })
 
     return (
@@ -113,28 +113,29 @@ export default class VLCPlayer extends Component {
 }
 
 VLCPlayer.propTypes = {
-  /* Native only */
-  rate: PropTypes.number,
-  seek: PropTypes.number,
-  snapshotPath: PropTypes.string,
-  paused: PropTypes.bool,
-
   /* Wrapper component */
   source: PropTypes.object,
 
-  onError: PropTypes.func,
-  onEnded: PropTypes.func,
-  onStopped: PropTypes.func,
-  onPlaying: PropTypes.func,
+  /* Native only */
+  paused: PropTypes.bool,
+  seek: PropTypes.number,
+  rate: PropTypes.number,
+  snapshotPath: PropTypes.string,
+
   onPaused: PropTypes.func,
+  onStopped: PropTypes.func,
+  onBuffering: PropTypes.func,
+  onPlaying: PropTypes.func,
+  onEnded: PropTypes.func,
+  onError: PropTypes.func,
   onProgress: PropTypes.func,
 
   /* Required by react-native */
-  scaleX: React.PropTypes.number,
-  scaleY: React.PropTypes.number,
-  translateX: React.PropTypes.number,
-  translateY: React.PropTypes.number,
-  rotation: React.PropTypes.number,
+  scaleX: PropTypes.number,
+  scaleY: PropTypes.number,
+  translateX: PropTypes.number,
+  translateY: PropTypes.number,
+  rotation: PropTypes.number,
   ...View.propTypes
 }
 

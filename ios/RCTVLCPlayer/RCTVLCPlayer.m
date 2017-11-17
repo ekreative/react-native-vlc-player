@@ -4,241 +4,199 @@
 #import "React/RCTEventDispatcher.h"
 #import "UIView+React.h"
 #import <MobileVLCKit.h>
+
 static NSString *const statusKeyPath = @"status";
 static NSString *const playbackLikelyToKeepUpKeyPath = @"playbackLikelyToKeepUp";
 static NSString *const playbackBufferEmptyKeyPath = @"playbackBufferEmpty";
 static NSString *const readyForDisplayKeyPath = @"readyForDisplay";
 static NSString *const playbackRate = @"rate";
 
+@interface RCTVLCPlayer()<VLCMediaPlayerDelegate>
+
+@property (nonatomic, weak) VLCMediaPlayer *player;
+
+@end
+
+
 @implementation RCTVLCPlayer
-{
-
-  /* Required to publish events */
-    RCTEventDispatcher *_eventDispatcher;
-//    VLCMediaPlayer *_player;
-
-    BOOL _paused;
-    BOOL _started;
-
-}
 
 
-static VLCMediaPlayer *_player = nil;
-
-
-- (instancetype)initWithEventDispatcher:(RCTEventDispatcher *)eventDispatcher
-{
-  if ((self = [super init])) {
-    _eventDispatcher = eventDispatcher;
-
-    [[NSNotificationCenter defaultCenter] addObserver:self
+- (id)initWithPlayer:(VLCMediaPlayer*)player {
+  if (self = [super init]) {
+      self.player = player;
+      [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(applicationWillResignActive:)
                                                  name:UIApplicationWillResignActiveNotification
                                                object:nil];
 
-    [[NSNotificationCenter defaultCenter] addObserver:self
+      [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(applicationWillEnterForeground:)
                                                  name:UIApplicationWillEnterForegroundNotification
                                                object:nil];
 
   }
-
   return self;
 }
 
-- (VLCMediaPlayer*)sharedPlayer {
-    @synchronized(self) {
-        if (!_player) {
-            _player = [[VLCMediaPlayer alloc] init];
-        }
-    }
-    return _player;
-}
 
-- (void)applicationWillResignActive:(NSNotification *)notification
-{
+- (void)applicationWillResignActive:(NSNotification *)notification {
     if (!_paused) {
         [self setPaused:_paused];
     }
 }
 
-- (void)applicationWillEnterForeground:(NSNotification *)notification
-{
-  [self applyModifiers];
+
+- (void)applicationWillEnterForeground:(NSNotification *)notification {
+    if(!_paused) {
+        [self setPaused:NO];
+    }
 }
 
-- (void)applyModifiers
-{
-    if(!_paused)
-        [self play];
-}
 
-- (void)setPaused:(BOOL)paused
-{
-    if(self.sharedPlayer){
-        if(!_started)
-            [self play];
-        else {
-            [self.sharedPlayer pause];
-            _paused = paused;
+- (void)setPaused:(BOOL)paused {
+    if (self.player) {
+        if (paused) {
+            [self.player pause];
+        } else {
+            [self.player play];
         }
+        _paused = paused;
     }
 }
 
--(void)play
-{
-    if(self.sharedPlayer){
-        [self.sharedPlayer play];
-        _paused = NO;
-        _started = YES;
-    }
-}
 
--(void)setSource:(NSDictionary *)source
-{
-//    if(self.sharedPlayer){
-//        [self _release];
-//    }
-    NSArray* options = [source objectForKey:@"initOptions"];
+- (void)setSource:(NSDictionary *)source {
+    if(self.player) {
+        [self.player pause];
+        self.player.drawable = nil;
+        self.player.delegate = nil;
+    }
+    
     NSString* uri    = [source objectForKey:@"uri"];
     BOOL    autoplay = [RCTConvert BOOL:[source objectForKey:@"autoplay"]];
     NSURL* _uri    = [NSURL URLWithString:uri];
 
     //init player && play
-//    _player = [[VLCMediaPlayer alloc] initWithOptions:options];
-    [self.sharedPlayer setDrawable:self];
-    self.sharedPlayer.delegate = self;
-
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(mediaPlayerStateChanged:) name:VLCMediaPlayerStateChanged object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(mediaPlayerTimeChanged:) name:VLCMediaPlayerTimeChanged object:nil];
-    self.sharedPlayer.media = [VLCMedia mediaWithURL:_uri];
-    if(autoplay)
-        [self play];
+    [self.player setDrawable:self];
+    self.player.delegate = self;
+    self.player.media = [VLCMedia mediaWithURL:_uri];
+    
+    [self setPaused:!autoplay];
 }
 
-- (void)mediaPlayerTimeChanged:(NSNotification *)aNotification
-{
+
+- (void)mediaPlayerTimeChanged:(NSNotification *)aNotification {
     [self updateVideoProgress];
 }
 
-- (void)mediaPlayerStateChanged:(NSNotification *)aNotification
-{
-    VLCMediaPlayerState state = self.sharedPlayer.state;
+
+- (void)mediaPlayerStateChanged:(NSNotification *)aNotification {
+    VLCMediaPlayerState state = self.player.state;
     switch (state) {
         case VLCMediaPlayerStatePaused:
             _paused = YES;
-            [_eventDispatcher sendInputEventWithName:@"onVideoPaused"
-                                                body:@{
-                                                       @"target": self.reactTag
-                                                       }];
+            if (self.onPaused) {
+                self.onPaused(@{ @"target": self.reactTag });
+            }
             break;
         case VLCMediaPlayerStateStopped:
-            [_eventDispatcher sendInputEventWithName:@"onVideoStopped"
-                                                body:@{
-                                                       @"target": self.reactTag
-                                                       }];
+            if (self.onStopped) {
+                self.onStopped(@{ @"target": self.reactTag });
+            }
             break;
         case VLCMediaPlayerStateBuffering:
-            [_eventDispatcher sendInputEventWithName:@"onVideoBuffering"
-                                                body:@{
-                                                       @"target": self.reactTag
-                                                       }];
+            if (self.onBuffering) {
+                self.onBuffering(@{ @"target": self.reactTag });
+            }
             break;
         case VLCMediaPlayerStatePlaying:
             _paused = NO;
-            [_eventDispatcher sendInputEventWithName:@"onVideoPlaying"
-                                                body:@{
-                                                       @"target": self.reactTag,
-                                                       @"seekable": [NSNumber numberWithBool:[self.sharedPlayer isSeekable]],
-                                                       @"duration":[NSNumber numberWithInt:[self.sharedPlayer.media.length intValue]]
-                                                       }];
+            if (self.onPlaying) {
+                self.onPlaying(@{ @"target": self.reactTag,
+                                  @"seekable": [NSNumber numberWithBool:[self.player isSeekable]],
+                                  @"duration":[NSNumber numberWithInt:[self.player.media.length intValue]] });
+            }
             break;
         case VLCMediaPlayerStateEnded:
-            [_eventDispatcher sendInputEventWithName:@"onVideoEnded"
-                                                body:@{
-                                                       @"target": self.reactTag
-                                                       }];
+            if (self.onEnded) {
+                self.onEnded(@{ @"target": self.reactTag });
+            }
             break;
         case VLCMediaPlayerStateError:
-            [_eventDispatcher sendInputEventWithName:@"onVideoError"
-                                                body:@{
-                                                       @"target": self.reactTag
-                                                       }];
-//            [self _release];
+            if (self.onError) {
+                self.onError(@{ @"target": self.reactTag });
+            }
+            [self _release];
             break;
         default:
             break;
     }
 }
 
--(void)updateVideoProgress
-{
 
-    int currentTime   = [[self.sharedPlayer time] intValue];
-    int remainingTime = [[self.sharedPlayer remainingTime] intValue];
-    int duration      = [self.sharedPlayer.media.length intValue];
+- (void)updateVideoProgress {
+    int currentTime   = [[self.player time] intValue];
+    int remainingTime = [[self.player remainingTime] intValue];
+    int duration      = [self.player.media.length intValue];
 
     if( currentTime >= 0 && currentTime < duration) {
-        [_eventDispatcher sendInputEventWithName:@"onVideoProgress"
-                                            body:@{
-                                                   @"target": self.reactTag,
-                                                   @"currentTime": [NSNumber numberWithInt:currentTime],
-                                                   @"remainingTime": [NSNumber numberWithInt:remainingTime],
-                                                   @"duration":[NSNumber numberWithInt:duration],
-                                                   @"position":[NSNumber numberWithFloat:self.sharedPlayer.position]
-                                                   }];
-    }
-}
-
-- (void)jumpBackward:(int)interval
-{
-    if(interval>=0 && interval <= [self.sharedPlayer.media.length intValue])
-        [self.sharedPlayer jumpBackward:interval];
-}
-
-- (void)jumpForward:(int)interval
-{
-    if(interval>=0 && interval <= [self.sharedPlayer.media.length intValue])
-        [self.sharedPlayer jumpForward:interval];
-}
-
--(void)setSeek:(float)pos
-{
-    if([self.sharedPlayer isSeekable]){
-        if(pos>=0 && pos <= 1){
-            [self.sharedPlayer setPosition:pos];
+        if (self.onProgress) {
+            self.onProgress(@{ @"target": self.reactTag,
+                               @"currentTime": [NSNumber numberWithInt:currentTime],
+                               @"remainingTime": [NSNumber numberWithInt:remainingTime],
+                               @"duration":[NSNumber numberWithInt:duration],
+                               @"position":[NSNumber numberWithFloat:self.player.position] });
         }
     }
 }
 
--(void)setSnapshotPath:(NSString*)path
-{
-  if(self.sharedPlayer)
-    [self.sharedPlayer saveVideoSnapshotAt:path withWidth:0 andHeight:0];
+
+- (void)jumpBackward:(int)interval {
+    if(interval>=0 && interval <= [self.player.media.length intValue]) {
+        [self.player jumpBackward:interval];
+    }
 }
 
--(void)setRate:(float)rate
-{
-    [self.sharedPlayer setRate:rate];
+
+- (void)jumpForward:(int)interval {
+    if(interval>=0 && interval <= [self.player.media.length intValue]) {
+        [self.player jumpForward:interval];
+    }
 }
 
-- (void)_release
-{
-    [self.sharedPlayer pause];
-    [self.sharedPlayer stop];
-//    self.sharedPlayer = nil;
-    _eventDispatcher = nil;
-    _player.drawable = nil;
-    _player.delegate = nil;
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    _player = nil;
+
+- (void)setSeek:(float)pos {
+    if([self.player isSeekable]) {
+        if(pos>=0 && pos <= 1){
+            [self.player setPosition:pos];
+        }
+    }
 }
+
+
+- (void)setSnapshotPath:(NSString*)path {
+    if(self.player) {
+        [self.player saveVideoSnapshotAt:path withWidth:0 andHeight:0];
+    }
+}
+
+
+- (void)setRate:(float)rate {
+    [self.player setRate:rate];
+}
+
+
+- (void)_release {
+    [self.player stop];
+    self.player.drawable = nil;
+    self.player.delegate = nil;
+}
+
 
 #pragma mark - Lifecycle
-- (void)removeFromSuperview
-{
+- (void)removeFromSuperview {
     [self _release];
-    [super removeFromSuperview];
+   [super removeFromSuperview];
 }
 
 @end

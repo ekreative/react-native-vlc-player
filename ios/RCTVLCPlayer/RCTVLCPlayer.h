@@ -1,9 +1,19 @@
 #import "React/RCTView.h"
 
-@class RCTEventDispatcher;
+@class VLCMediaPlayer;
 
 @interface RCTVLCPlayer : UIView
 
-- (instancetype)initWithEventDispatcher:(RCTEventDispatcher *)eventDispatcher NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithPlayer:(VLCMediaPlayer*)player;
+
+@property (nonatomic) BOOL paused;
+
+@property (nonatomic, copy) RCTDirectEventBlock onPaused;
+@property (nonatomic, copy) RCTDirectEventBlock onStopped;
+@property (nonatomic, copy) RCTDirectEventBlock onBuffering;
+@property (nonatomic, copy) RCTDirectEventBlock onPlaying;
+@property (nonatomic, copy) RCTDirectEventBlock onEnded;
+@property (nonatomic, copy) RCTDirectEventBlock onError;
+@property (nonatomic, copy) RCTDirectEventBlock onProgress;
 
 @end
