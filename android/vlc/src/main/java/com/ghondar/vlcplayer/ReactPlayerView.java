@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.PixelFormat;
 import android.net.Uri;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -15,7 +16,11 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
-import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.LifecycleEventListener;
+import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.uimanager.ThemedReactContext;
+import com.facebook.react.uimanager.events.RCTEventEmitter;
 import com.vlcplayer.R;
 
 import org.videolan.libvlc.IVLCVout;
@@ -24,12 +29,42 @@ import org.videolan.libvlc.Media;
 import org.videolan.libvlc.MediaPlayer;
 import org.videolan.libvlc.util.VLCUtil;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
-public class PlayerView extends FrameLayout implements IVLCVout.Callback {
+public class ReactPlayerView extends FrameLayout implements
+        IVLCVout.Callback,
+        LifecycleEventListener,
+        MediaPlayer.EventListener {
 
-    private String filePath;
+    private boolean pausedState;
+
+    public enum Events {
+        EVENT_DURATION("onVideoPlaying"),
+        EVENT_PROGRESS("onVideoProgress"),
+        EVENT_SEEK("onVideoSeek"),
+        EVENT_END("onVideoEnd");
+
+        private final String mName;
+
+        Events(final String name) {
+            mName = name;
+        }
+
+        @Override
+        public String toString() {
+            return mName;
+        }
+    }
+
+    public static final String EVENT_PROP_DURATION = "duration";
+    public static final String EVENT_PROP_CURRENT_TIME = "currentTime";
+    public static final String EVENT_PROP_END = "endReached";
+    public static final String EVENT_PROP_SEEK_TIME = "seekTime";
+
+    private ThemedReactContext mThemedReactContext;
+    private RCTEventEmitter mEventEmitter;
+
+    private String mSrcString;
 
     // display surface
     private SurfaceView mSurface;
@@ -47,8 +82,6 @@ public class PlayerView extends FrameLayout implements IVLCVout.Callback {
 
     private int counter = 0;
 
-    private PlayerEventListener mPlayerListener = new PlayerEventListener(this);
-
     private static final int SURFACE_BEST_FIT = 0;
     private static final int SURFACE_FIT_HORIZONTAL = 1;
     private static final int SURFACE_FIT_VERTICAL = 2;
@@ -61,15 +94,23 @@ public class PlayerView extends FrameLayout implements IVLCVout.Callback {
     private Media media;
     private boolean autoPlay;
 
-    public PlayerView(@NonNull Context context) {
+    public ReactPlayerView(@NonNull Context context) {
         this(context, null);
     }
 
-    public PlayerView(@NonNull Context context, @Nullable AttributeSet attrs) {
+    public ReactPlayerView(@NonNull Context context, @Nullable AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public PlayerView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public ReactPlayerView(ThemedReactContext context) {
+        this(context, null, 0);
+        mThemedReactContext = context;
+        mEventEmitter = mThemedReactContext.getJSModule(RCTEventEmitter.class);
+        mThemedReactContext.addLifecycleEventListener(this);
+        initializePlayerIfNeeded();
+    }
+
+    public ReactPlayerView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init();
     }
@@ -81,9 +122,8 @@ public class PlayerView extends FrameLayout implements IVLCVout.Callback {
         holder = mSurface.getHolder();
     }
 
-    private void createPlayer() {
-        releasePlayer();
-        try {
+    private void initializePlayerIfNeeded() {
+        if (mMediaPlayer == null) {
             final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getContext().getApplicationContext());
             // Create LibVLC
             ArrayList<String> options = new ArrayList<>(50);
@@ -115,23 +155,23 @@ public class PlayerView extends FrameLayout implements IVLCVout.Callback {
             mMediaPlayer = new MediaPlayer(libvlc);
             holder.setFormat(PixelFormat.RGBX_8888);
             holder.setKeepScreenOn(true);
-            mMediaPlayer.setEventListener(mPlayerListener);
+            mMediaPlayer.setEventListener(this);
+        }
+    }
 
-            // Set up video output
-            final IVLCVout vout = mMediaPlayer.getVLCVout();
-            if (!vout.areViewsAttached()) {
-                vout.setVideoView(mSurface);
-                vout.addCallback(this);
-                vout.attachViews();
-            }
-            Uri uri = Uri.parse(filePath);
-            media = new Media(libvlc, uri);
-            mMediaPlayer.setMedia(media);
-            if (autoPlay) {
-                mMediaPlayer.play();
-            }
-        } catch (Exception e) {
-            Toast.makeText(getContext(), "Error creating player!", Toast.LENGTH_LONG).show();
+    private void setMedia(String filePath) {
+        // Set up video output
+        final IVLCVout vout = mMediaPlayer.getVLCVout();
+        if (!vout.areViewsAttached()) {
+            vout.setVideoView(mSurface);
+            vout.addCallback(this);
+            vout.attachViews();
+        }
+        Uri uri = Uri.parse(filePath);
+        media = new Media(libvlc, uri);
+        mMediaPlayer.setMedia(media);
+        if (autoPlay) {
+            mMediaPlayer.play();
         }
     }
 
@@ -212,36 +252,28 @@ public class PlayerView extends FrameLayout implements IVLCVout.Callback {
 
         switch (mCurrentSize) {
             case SURFACE_BEST_FIT:
-                if (counter > 2)
-//                    Toast.makeText(getContext(), "Best Fit", Toast.LENGTH_SHORT).show();
-                if (displayAspectRatio < aspectRatio) displayHeight = displayWidth / aspectRatio;
+                if (counter > 2) if (displayAspectRatio < aspectRatio) displayHeight = displayWidth / aspectRatio;
                 else displayWidth = displayHeight * aspectRatio;
                 break;
             case SURFACE_FIT_HORIZONTAL:
-//                Toast.makeText(getContext(), "Fit Horizontal", Toast.LENGTH_SHORT).show();
                 displayHeight = displayWidth / aspectRatio;
                 break;
             case SURFACE_FIT_VERTICAL:
-//                Toast.makeText(getContext(), "Fit Horizontal", Toast.LENGTH_SHORT).show();
                 displayWidth = displayHeight * aspectRatio;
                 break;
             case SURFACE_FILL:
-//                Toast.makeText(getContext(), "Fill", Toast.LENGTH_SHORT).show();
                 break;
             case SURFACE_16_9:
-//                Toast.makeText(getContext(), "16:9", Toast.LENGTH_SHORT).show();
                 aspectRatio = 16.0 / 9.0;
                 if (displayAspectRatio < aspectRatio) displayHeight = displayWidth / aspectRatio;
                 else displayWidth = displayHeight * aspectRatio;
                 break;
             case SURFACE_4_3:
-//                Toast.makeText(getContext(), "4:3", Toast.LENGTH_SHORT).show();
                 aspectRatio = 4.0 / 3.0;
                 if (displayAspectRatio < aspectRatio) displayHeight = displayWidth / aspectRatio;
                 else displayWidth = displayHeight * aspectRatio;
                 break;
             case SURFACE_ORIGINAL:
-//                Toast.makeText(getContext(), "Original", Toast.LENGTH_SHORT).show();
                 displayHeight = mVideoVisibleHeight;
                 displayWidth = visibleWidth;
                 break;
@@ -265,77 +297,41 @@ public class PlayerView extends FrameLayout implements IVLCVout.Callback {
         changeSurfaceSize();
     }
 
-    /**
-     * Set the {@link PlayerEventListener} to use.
-     * @param eventListener the {@link PlayerEventListener} to use.
-     */
-    public void setEventListener(PlayerEventListener eventListener) {
-        mPlayerListener = eventListener;
-        mMediaPlayer.setEventListener(mPlayerListener);
+    public void setFilePath(String filePath) {
+        this.mSrcString = filePath;
+        setMedia(mSrcString);
     }
 
-    /**
-     * Set path to the video file and set it to be auto played.
-     * @param filePath path to the movie file ('file:///storage/emulated/0/example.avi').
-     */
-    public void setFilePath(String filePath, boolean isAutoPlay) {
-        this.filePath = filePath;
-        this.autoPlay = isAutoPlay;
-        createPlayer();
+    public void setAutoPlay(boolean autoPlay) {
+        this.autoPlay = autoPlay;
     }
 
     /**
      * Play or pause the media.
      */
-    @ReactMethod
-    public void play() {
-        if (mMediaPlayer.isPlaying()) {
-            mMediaPlayer.pause();
+    public void setPaused(boolean paused) {
+        pausedState = paused;
+        if (paused) {
+            if (mMediaPlayer.isPlaying()) {
+                mMediaPlayer.pause();
+            }
         } else {
-            mMediaPlayer.play();
+            if (!mMediaPlayer.isPlaying()) {
+                mMediaPlayer.play();
+            }
         }
     }
 
-    public void onPause() {
-        mMediaPlayer.pause();
-    }
-
-    public void onDestroy() {
+    public void onDropViewInstance() {
         releasePlayer();
     }
 
-    /**
-     * Return current movie time (in ms).
-     * @return current movie time is ms or -1 if there is no media.
-     */
-    @ReactMethod
-    public long getCurrentTime() {
-        return mMediaPlayer.getTime();
-    }
-
-    /**
-     * Gets current movie's length in ms.
-     * @return the movie length (in ms), or -1 if there is no media.
-     */
-    @ReactMethod
-    public long getDuration() {
-        return media.getDuration();
-    }
-
-    /**
-     * Triggers when movie end reached end reloading media to the player
-     */
-    private void onEndReached() {
-        mMediaPlayer.setMedia(media);
-    }
-
-    public boolean isPlaying() {
-        return mMediaPlayer.isPlaying();
-    }
-
-    @ReactMethod
-    public void setTime(long time) {
-        mMediaPlayer.setTime(time);
+    public void seekTo(int msec) {
+        WritableMap event = Arguments.createMap();
+        event.putDouble(EVENT_PROP_CURRENT_TIME, mMediaPlayer.getTime() / 1000.0);
+        event.putDouble(EVENT_PROP_SEEK_TIME, msec / 1000.0);
+        mEventEmitter.receiveEvent(getId(), Events.EVENT_SEEK.toString(), event);
+        mMediaPlayer.setTime(msec);
     }
 
     @Override
@@ -369,22 +365,44 @@ public class PlayerView extends FrameLayout implements IVLCVout.Callback {
         Toast.makeText(getContext(), "Error with hardware acceleration", Toast.LENGTH_LONG).show();
     }
 
-    public static class PlayerEventListener implements MediaPlayer.EventListener {
-
-        private WeakReference<PlayerView> playerView;
-
-        public PlayerEventListener(PlayerView playerView) {
-            this.playerView = new WeakReference<>(playerView);
-        }
-
-        @Override
-        public void onEvent(MediaPlayer.Event event) {
-            PlayerView player = playerView.get();
-            switch (event.type) {
-                case MediaPlayer.Event.EndReached:
-                    player.onEndReached();
-                    break;
+    @Override
+    public void onHostResume() {
+        new Handler().post(new Runnable() {
+            @Override
+            public void run() {
+                // Restore original state
+                setPaused(pausedState);
             }
+        });
+    }
+
+    @Override
+    public void onHostPause() {
+        setPaused(true);
+    }
+
+    @Override
+    public void onHostDestroy() {
+
+    }
+
+    @Override
+    public void onEvent(MediaPlayer.Event event) {
+        WritableMap eventMap = Arguments.createMap();
+        switch (event.type) {
+            case MediaPlayer.Event.EndReached:
+                pausedState = false;
+                eventMap.putBoolean(EVENT_PROP_END, true);
+                mEventEmitter.receiveEvent(getId(), Events.EVENT_END.toString(), eventMap);
+                break;
+            case MediaPlayer.Event.Playing:
+                eventMap.putDouble(EVENT_PROP_DURATION, mMediaPlayer.getLength() / 1000.0);
+                mEventEmitter.receiveEvent(getId(), Events.EVENT_DURATION.toString(), eventMap);
+                break;
+            case MediaPlayer.Event.TimeChanged:
+                eventMap.putDouble(EVENT_PROP_CURRENT_TIME, mMediaPlayer.getTime() / 1000.0);
+                mEventEmitter.receiveEvent(getId(), Events.EVENT_PROGRESS.toString(), eventMap);
+                break;
         }
     }
 }
