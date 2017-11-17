@@ -63,7 +63,7 @@ export default class VLCPlayer extends Component {
 
   _onEnded (event) {
     if (this.props.onEnded) {
-      this.props.onEnd(event.nativeEvent)
+      this.props.onEnded(event.nativeEvent)
     }
   }
 
