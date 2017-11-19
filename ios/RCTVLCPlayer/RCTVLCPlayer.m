@@ -13,7 +13,7 @@ static NSString *const playbackRate = @"rate";
 
 @interface RCTVLCPlayer()<VLCMediaPlayerDelegate>
 
-@property (nonatomic, weak) VLCMediaPlayer *player;
+@property (nonatomic, strong) VLCMediaPlayer *player;
 
 @end
 
@@ -65,13 +65,7 @@ static NSString *const playbackRate = @"rate";
 }
 
 
-- (void)setSource:(NSDictionary *)source {
-    if(self.player) {
-        [self.player pause];
-        self.player.drawable = nil;
-        self.player.delegate = nil;
-    }
-    
+- (void)setSource:(NSDictionary *)source {   
     NSString* uri    = [source objectForKey:@"uri"];
     BOOL    autoplay = [RCTConvert BOOL:[source objectForKey:@"autoplay"]];
     NSURL* _uri    = [NSURL URLWithString:uri];
@@ -80,7 +74,6 @@ static NSString *const playbackRate = @"rate";
     [self.player setDrawable:self];
     self.player.delegate = self;
     self.player.media = [VLCMedia mediaWithURL:_uri];
-    
     [self setPaused:!autoplay];
 }
 
@@ -152,16 +145,6 @@ static NSString *const playbackRate = @"rate";
 }
 
 
-- (void)callOnEndCallbacks {
-    if (self.onEnded) {
-        self.onEnded(@{ @"target": self.reactTag });
-    }
-    if (self.onStopped) {
-        self.onStopped(@{ @"target": self.reactTag });
-    }
-}
-
-
 - (void)jumpBackward:(int)interval {
     if(interval>=0 && interval <= [self.player.media.length intValue]) {
         [self.player jumpBackward:interval];
@@ -201,6 +184,7 @@ static NSString *const playbackRate = @"rate";
     [self.player stop];
     self.player.drawable = nil;
     self.player.delegate = nil;
+    self.player = nil;
 }
 
 
