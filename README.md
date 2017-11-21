@@ -10,7 +10,7 @@ Run `npm i -S react-native-vlc-player`
 
 #### iOS
 
-- add `pod 'MobileVLCKit-unstable', '3.0.0a43'` in Podfile (stable version of VLCKit not working in iOS 11 yet)
+- add `pod 'MobileVLCKit-unstable', '3.0.0a41'` in Podfile (stable version of VLCKit not working in iOS 11 yet)
 - `pod install` inside ./ios/ folder
 - `rnpm link react-native-vlc-player`
 - also you must disable bitcode option in target build settings (otherwise it not linked correctly for armv7)
