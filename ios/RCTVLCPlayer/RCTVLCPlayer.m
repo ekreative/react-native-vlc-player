@@ -3,6 +3,8 @@
 #import "React/RCTBridgeModule.h"
 #import "React/RCTEventDispatcher.h"
 #import "UIView+React.h"
+#import <MediaPlayer/MediaPlayer.h>
+#import <AVFoundation/AVFoundation.h>
 #import <MobileVLCKit.h>
 
 static NSString *const statusKeyPath = @"status";
@@ -11,8 +13,32 @@ static NSString *const playbackBufferEmptyKeyPath = @"playbackBufferEmpty";
 static NSString *const readyForDisplayKeyPath = @"readyForDisplay";
 static NSString *const playbackRate = @"rate";
 
+@interface MPVolumeView()
+
+@property (nonatomic, readonly) UISlider *volumeSlider;
+
+@end
+
+@implementation MPVolumeView (private_volume)
+
+- (UISlider*)volumeSlider {
+    for(id view in self.subviews) {
+        if ([view isKindOfClass:[UISlider class]]) {
+            UISlider *slider = (UISlider*)view;
+            slider.continuous = NO;
+            slider.value = AVAudioSession.sharedInstance.outputVolume;
+            return slider;
+        }
+    }
+    return nil;
+}
+
+@end
+
+
 @interface RCTVLCPlayer()<VLCMediaPlayerDelegate>
 
+@property (nonatomic) UISlider *volumeSlider;
 @property (nonatomic, strong) VLCMediaPlayer *player;
 
 @end
@@ -20,9 +46,13 @@ static NSString *const playbackRate = @"rate";
 
 @implementation RCTVLCPlayer
 
+@synthesize volume = _volume;
+
 
 - (id)initWithPlayer:(VLCMediaPlayer*)player {
   if (self = [super init]) {
+      _volume = -1.0;
+      self.volumeSlider = [[[MPVolumeView alloc] init] volumeSlider];
       self.player = player;
       [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(applicationWillResignActive:)
@@ -33,6 +63,11 @@ static NSString *const playbackRate = @"rate";
                                              selector:@selector(applicationWillEnterForeground:)
                                                  name:UIApplicationWillEnterForegroundNotification
                                                object:nil];
+      
+      [[NSNotificationCenter defaultCenter] addObserver:self
+                                               selector:@selector(volumeChanged:)
+                                                   name:@"AVSystemController_SystemVolumeDidChangeNotification"
+                                                 object:nil];
 
   }
   return self;
@@ -65,7 +100,26 @@ static NSString *const playbackRate = @"rate";
 }
 
 
-- (void)setSource:(NSDictionary *)source {   
+- (void)setVolume:(float)volume {
+    if ((_volume != volume)) {
+        _volume = volume;
+        self.volumeSlider.value = volume;
+    }
+}
+
+
+- (float)volume {
+    return self.volumeSlider.value;
+}
+
+
+- (void)setSource:(NSDictionary *)source {
+    if(self.player) {
+        [self.player pause];
+        self.player.drawable = nil;
+        self.player.delegate = nil;
+    }
+
     NSString* uri    = [source objectForKey:@"uri"];
     BOOL    autoplay = [RCTConvert BOOL:[source objectForKey:@"autoplay"]];
     NSURL* _uri    = [NSURL URLWithString:uri];
@@ -124,6 +178,17 @@ static NSString *const playbackRate = @"rate";
             break;
         default:
             break;
+    }
+}
+
+
+- (void)volumeChanged:(NSNotification *)notification {
+    float volume = [[[notification userInfo] objectForKey:@"AVSystemController_AudioVolumeNotificationParameter"] floatValue];
+    if (_volume != volume) {
+        _volume = volume;
+        if (self.onVolumeChanged) {
+            self.onVolumeChanged(@{@"volume": [NSNumber numberWithFloat: volume]});
+        }
     }
 }
 
@@ -191,7 +256,9 @@ static NSString *const playbackRate = @"rate";
 #pragma mark - Lifecycle
 - (void)removeFromSuperview {
     [self _release];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [super removeFromSuperview];
 }
 
 @end
+
