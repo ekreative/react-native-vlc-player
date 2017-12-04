@@ -25,6 +25,7 @@ export default class VLCPlayer extends Component {
     this._onStopped = this._onStopped.bind(this)
     this._onPaused = this._onPaused.bind(this)
     this._onBuffering = this._onBuffering.bind(this)
+    this._onVolumeChanged = this._onVolumeChanged.bind(this)
   }
 
   setNativeProps (nativeProps) {
@@ -86,6 +87,12 @@ export default class VLCPlayer extends Component {
     }
   }
 
+  _onVolumeChanged (event) {
+    if (this.props.onVolumeChanged) {
+      this.props.onVolumeChanged(event.nativeEvent)
+    }
+  }
+
   render () {
     const {
       source
@@ -102,7 +109,8 @@ export default class VLCPlayer extends Component {
       onPlaying: this._onPlaying,
       onPaused: this._onPaused,
       onStopped: this._onStopped,
-      onBuffering: this._onBuffering
+      onBuffering: this._onBuffering,
+      onVolumeChanged: this._onVolumeChanged
     })
 
     return (
@@ -119,6 +127,7 @@ VLCPlayer.propTypes = {
   paused: PropTypes.bool,
   seek: PropTypes.number,
   rate: PropTypes.number,
+  volume: PropTypes.number,
   snapshotPath: PropTypes.string,
 
   onPaused: PropTypes.func,
@@ -128,6 +137,7 @@ VLCPlayer.propTypes = {
   onEnded: PropTypes.func,
   onError: PropTypes.func,
   onProgress: PropTypes.func,
+  onVolumeChanged: PropTypes.func,
 
   /* Required by react-native */
   scaleX: PropTypes.number,
