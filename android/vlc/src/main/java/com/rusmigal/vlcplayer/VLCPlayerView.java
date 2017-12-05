@@ -34,13 +34,13 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
     private boolean pausedState;
 
     public enum Events {
-        EVENT_PROGRESS("onProgress"),
-        EVENT_ENDED("onEnded"),
-        EVENT_STOPPED("onStopped"),
-        EVENT_PLAYING("onPlaying"),
-        EVENT_BUFFERING("onBuffering"),
-        EVENT_PAUSED("onPaused"),
-        EVENT_ERROR("onError"),
+        EVENT_PROGRESS("onVideoProgress"),
+        EVENT_ENDED("onVideoEnded"),
+        EVENT_STOPPED("onVideoStopped"),
+        EVENT_PLAYING("onVideoPlaying"),
+        EVENT_BUFFERING("onVideoBuffering"),
+        EVENT_PAUSED("onVideoPaused"),
+        EVENT_ERROR("onVideoError"),
         EVENT_VOLUME_CHANGED("onVolumeChanged"),
         EVENT_SEEK("onVideoSeek");
 
@@ -114,7 +114,7 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
     private void init() {
         inflate(getContext(), R.layout.player, this);
 
-        mSurface = findViewById(R.id.vlc_surface);
+        mSurface = (SurfaceView) findViewById(R.id.vlc_surface);
         holder = mSurface.getHolder();
     }
 
