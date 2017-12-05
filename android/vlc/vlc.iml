@@ -94,6 +94,7 @@
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/intermediate-jars" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/javaPrecompile" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/jniLibs" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/lint" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/manifests" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/res" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/rs" />
@@ -108,12 +109,11 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="com.facebook.stetho:stetho-okhttp:1.2.0@jar" level="project" />
     <orderEntry type="library" name="com.parse.bolts:bolts-android:1.1.4@jar" level="project" />
-    <orderEntry type="library" name="com.android.support:support-v4-23.1.1" level="project" />
+    <orderEntry type="library" name="com.android.support:support-v4-23.0.1" level="project" />
     <orderEntry type="library" name="com.squareup.okhttp:okhttp-ws:2.5.0@jar" level="project" />
     <orderEntry type="library" name="commons-cli:commons-cli:1.2@jar" level="project" />
     <orderEntry type="library" name="com.facebook.fresco:fresco-0.8.1" level="project" />
     <orderEntry type="library" name="com.facebook.fresco:imagepipeline-0.8.1" level="project" />
-    <orderEntry type="library" name="de.mrmaffen:vlc-android-sdk-1.9.8" level="project" />
     <orderEntry type="library" name="com.android.support:appcompat-v7-23.0.1" level="project" />
     <orderEntry type="library" name="com.squareup.okhttp:okhttp:2.5.0@jar" level="project" />
     <orderEntry type="library" name="com.facebook.fresco:fbcore-0.8.1" level="project" />
@@ -121,9 +121,10 @@
     <orderEntry type="library" name="com.facebook.react:react-native-0.20.1" level="project" />
     <orderEntry type="library" name="com.facebook.stetho:stetho:1.2.0@jar" level="project" />
     <orderEntry type="library" name="com.nineoldandroids:library:2.4.0@jar" level="project" />
+    <orderEntry type="library" name="de.mrmaffen:libvlc-android-2.1.12" level="project" />
     <orderEntry type="library" name="com.google.code.findbugs:jsr305:3.0.0@jar" level="project" />
     <orderEntry type="library" name="com.fasterxml.jackson.core:jackson-core:2.2.3@jar" level="project" />
-    <orderEntry type="library" name="com.android.support:support-annotations:23.1.1@jar" level="project" />
+    <orderEntry type="library" name="com.android.support:support-annotations:23.0.1@jar" level="project" />
     <orderEntry type="library" name="com.android.support:recyclerview-v7-23.0.1" level="project" />
     <orderEntry type="library" name="com.facebook.fresco:imagepipeline-okhttp-0.8.1" level="project" />
     <orderEntry type="library" name="com.facebook.fresco:drawee-0.8.1" level="project" />

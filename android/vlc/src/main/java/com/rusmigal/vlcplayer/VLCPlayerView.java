@@ -1,4 +1,4 @@
-package com.ghondar.vlcplayer;
+package com.rusmigal.vlcplayer;
 
 
 import android.content.Context;
@@ -12,9 +12,7 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.Toast;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.LifecycleEventListener;
@@ -31,18 +29,20 @@ import org.videolan.libvlc.util.VLCUtil;
 
 import java.util.ArrayList;
 
-public class ReactPlayerView extends FrameLayout implements
-        IVLCVout.Callback,
-        LifecycleEventListener,
-        MediaPlayer.EventListener {
+public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, LifecycleEventListener, MediaPlayer.EventListener {
 
     private boolean pausedState;
 
     public enum Events {
-        EVENT_DURATION("onVideoPlaying"),
-        EVENT_PROGRESS("onVideoProgress"),
-        EVENT_SEEK("onVideoSeek"),
-        EVENT_END("onVideoEnd");
+        EVENT_PROGRESS("onProgress"),
+        EVENT_ENDED("onEnded"),
+        EVENT_STOPPED("onStopped"),
+        EVENT_PLAYING("onPlaying"),
+        EVENT_BUFFERING("onBuffering"),
+        EVENT_PAUSED("onPaused"),
+        EVENT_ERROR("onError"),
+        EVENT_VOLUME_CHANGED("onVolumeChanged"),
+        EVENT_SEEK("onVideoSeek");
 
         private final String mName;
 
@@ -75,10 +75,6 @@ public class ReactPlayerView extends FrameLayout implements
     private MediaPlayer mMediaPlayer = null;
     private int mVideoHeight;
     private int mVideoWidth;
-    private int mVideoVisibleHeight;
-    private int mVideoVisibleWidth;
-    private int mSarNum;
-    private int mSarDen;
 
     private int counter = 0;
 
@@ -94,15 +90,15 @@ public class ReactPlayerView extends FrameLayout implements
     private Media media;
     private boolean autoPlay;
 
-    public ReactPlayerView(@NonNull Context context) {
+    public VLCPlayerView(@NonNull Context context) {
         this(context, null);
     }
 
-    public ReactPlayerView(@NonNull Context context, @Nullable AttributeSet attrs) {
+    public VLCPlayerView(@NonNull Context context, @Nullable AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public ReactPlayerView(ThemedReactContext context) {
+    public VLCPlayerView(ThemedReactContext context) {
         this(context, null, 0);
         mThemedReactContext = context;
         mEventEmitter = mThemedReactContext.getJSModule(RCTEventEmitter.class);
@@ -110,7 +106,7 @@ public class ReactPlayerView extends FrameLayout implements
         initializePlayerIfNeeded();
     }
 
-    public ReactPlayerView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public VLCPlayerView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init();
     }
@@ -147,7 +143,7 @@ public class ReactPlayerView extends FrameLayout implements
 
             options.add("-vv");
 
-            libvlc = new LibVLC(options);
+            libvlc = new LibVLC(mThemedReactContext, options);
 
             holder.setKeepScreenOn(true);
 
@@ -212,90 +208,90 @@ public class ReactPlayerView extends FrameLayout implements
         mVideoHeight = 0;
     }
 
-    private void changeSurfaceSize() {
-        int screenWidth = getWidth();
-        int screenHeight = getHeight();
-
-        if (mMediaPlayer != null) {
-            final IVLCVout vlcVout = mMediaPlayer.getVLCVout();
-            vlcVout.setWindowSize(screenWidth, screenHeight);
-        }
-
-        double displayWidth = screenWidth, displayHeight = screenHeight;
-
-        if (screenWidth < screenHeight) {
-            displayWidth = screenHeight;
-            displayHeight = screenWidth;
-        }
-
-        // sanity check
-        if (displayWidth * displayHeight <= 1 || mVideoWidth * mVideoHeight <= 1) {
-            return;
-        }
-
-        // compute the aspect ratio
-        double aspectRatio, visibleWidth;
-        if (mSarDen == mSarNum) {
-            /* No indication about the density, assuming 1:1 */
-            visibleWidth = mVideoVisibleWidth;
-            aspectRatio = (double) mVideoVisibleWidth / (double) mVideoVisibleHeight;
-        } else {
-            /* Use the specified aspect ratio */
-            visibleWidth = mVideoVisibleWidth * (double) mSarNum / mSarDen;
-            aspectRatio = visibleWidth / mVideoVisibleHeight;
-        }
-
-        // compute the display aspect ratio
-        double displayAspectRatio = displayWidth / displayHeight;
-
-        counter++;
-
-        switch (mCurrentSize) {
-            case SURFACE_BEST_FIT:
-                if (counter > 2) if (displayAspectRatio < aspectRatio) displayHeight = displayWidth / aspectRatio;
-                else displayWidth = displayHeight * aspectRatio;
-                break;
-            case SURFACE_FIT_HORIZONTAL:
-                displayHeight = displayWidth / aspectRatio;
-                break;
-            case SURFACE_FIT_VERTICAL:
-                displayWidth = displayHeight * aspectRatio;
-                break;
-            case SURFACE_FILL:
-                break;
-            case SURFACE_16_9:
-                aspectRatio = 16.0 / 9.0;
-                if (displayAspectRatio < aspectRatio) displayHeight = displayWidth / aspectRatio;
-                else displayWidth = displayHeight * aspectRatio;
-                break;
-            case SURFACE_4_3:
-                aspectRatio = 4.0 / 3.0;
-                if (displayAspectRatio < aspectRatio) displayHeight = displayWidth / aspectRatio;
-                else displayWidth = displayHeight * aspectRatio;
-                break;
-            case SURFACE_ORIGINAL:
-                displayHeight = mVideoVisibleHeight;
-                displayWidth = visibleWidth;
-                break;
-        }
-
-        // set display size
-        int finalWidth = (int) Math.ceil(displayWidth * mVideoWidth / mVideoVisibleWidth);
-        int finalHeight = (int) Math.ceil(displayHeight * mVideoHeight / mVideoVisibleHeight);
-
-        SurfaceHolder holder = mSurface.getHolder();
-        holder.setFixedSize(finalWidth, finalHeight);
-
-        ViewGroup.LayoutParams lp = mSurface.getLayoutParams();
-        lp.width = finalWidth;
-        lp.height = finalHeight;
-        mSurface.setLayoutParams(lp);
-        mSurface.invalidate();
-    }
-
-    private void changeSurfaceLayout() {
-        changeSurfaceSize();
-    }
+//    private void changeSurfaceSize() {
+//        int screenWidth = getWidth();
+//        int screenHeight = getHeight();
+//
+//        if (mMediaPlayer != null) {
+//            final IVLCVout vlcVout = mMediaPlayer.getVLCVout();
+//            vlcVout.setWindowSize(screenWidth, screenHeight);
+//        }
+//
+//        double displayWidth = screenWidth, displayHeight = screenHeight;
+//
+//        if (screenWidth < screenHeight) {
+//            displayWidth = screenHeight;
+//            displayHeight = screenWidth;
+//        }
+//
+//        // sanity check
+//        if (displayWidth * displayHeight <= 1 || mVideoWidth * mVideoHeight <= 1) {
+//            return;
+//        }
+//
+//        // compute the aspect ratio
+//        double aspectRatio, visibleWidth;
+//        if (mSarDen == mSarNum) {
+//            /* No indication about the density, assuming 1:1 */
+//            visibleWidth = mVideoVisibleWidth;
+//            aspectRatio = (double) mVideoVisibleWidth / (double) mVideoVisibleHeight;
+//        } else {
+//            /* Use the specified aspect ratio */
+//            visibleWidth = mVideoVisibleWidth * (double) mSarNum / mSarDen;
+//            aspectRatio = visibleWidth / mVideoVisibleHeight;
+//        }
+//
+//        // compute the display aspect ratio
+//        double displayAspectRatio = displayWidth / displayHeight;
+//
+//        counter++;
+//
+//        switch (mCurrentSize) {
+//            case SURFACE_BEST_FIT:
+//                if (counter > 2) if (displayAspectRatio < aspectRatio) displayHeight = displayWidth / aspectRatio;
+//                else displayWidth = displayHeight * aspectRatio;
+//                break;
+//            case SURFACE_FIT_HORIZONTAL:
+//                displayHeight = displayWidth / aspectRatio;
+//                break;
+//            case SURFACE_FIT_VERTICAL:
+//                displayWidth = displayHeight * aspectRatio;
+//                break;
+//            case SURFACE_FILL:
+//                break;
+//            case SURFACE_16_9:
+//                aspectRatio = 16.0 / 9.0;
+//                if (displayAspectRatio < aspectRatio) displayHeight = displayWidth / aspectRatio;
+//                else displayWidth = displayHeight * aspectRatio;
+//                break;
+//            case SURFACE_4_3:
+//                aspectRatio = 4.0 / 3.0;
+//                if (displayAspectRatio < aspectRatio) displayHeight = displayWidth / aspectRatio;
+//                else displayWidth = displayHeight * aspectRatio;
+//                break;
+//            case SURFACE_ORIGINAL:
+//                displayHeight = mVideoVisibleHeight;
+//                displayWidth = visibleWidth;
+//                break;
+//        }
+//
+//        // set display size
+//        int finalWidth = (int) Math.ceil(displayWidth * mVideoWidth / mVideoVisibleWidth);
+//        int finalHeight = (int) Math.ceil(displayHeight * mVideoHeight / mVideoVisibleHeight);
+//
+//        SurfaceHolder holder = mSurface.getHolder();
+//        holder.setFixedSize(finalWidth, finalHeight);
+//
+//        ViewGroup.LayoutParams lp = mSurface.getLayoutParams();
+//        lp.width = finalWidth;
+//        lp.height = finalHeight;
+//        mSurface.setLayoutParams(lp);
+//        mSurface.invalidate();
+//    }
+//
+//    private void changeSurfaceLayout() {
+//        changeSurfaceSize();
+//    }
 
     public void setFilePath(String filePath) {
         this.mSrcString = filePath;
@@ -326,26 +322,16 @@ public class ReactPlayerView extends FrameLayout implements
         releasePlayer();
     }
 
-    public void seekTo(int msec) {
+    public void seekTo(float msec) {
         WritableMap event = Arguments.createMap();
-        event.putDouble(EVENT_PROP_CURRENT_TIME, mMediaPlayer.getTime() / 1000.0);
-        event.putDouble(EVENT_PROP_SEEK_TIME, msec / 1000.0);
+        event.putDouble(EVENT_PROP_CURRENT_TIME, mMediaPlayer.getTime());
+        event.putDouble(EVENT_PROP_SEEK_TIME, msec);
         mEventEmitter.receiveEvent(getId(), Events.EVENT_SEEK.toString(), event);
-        mMediaPlayer.setTime(msec);
+        mMediaPlayer.setTime((long) msec);
     }
 
-    @Override
-    public void onNewLayout(IVLCVout vout, int width, int height, int visibleWidth, int visibleHeight, int sarNum, int sarDen) {
-        if (width * height == 0) return;
-
-        // store video size
-        mVideoWidth = width;
-        mVideoHeight = height;
-        mVideoVisibleWidth = visibleWidth;
-        mVideoVisibleHeight = visibleHeight;
-        mSarNum = sarNum;
-        mSarDen = sarDen;
-        changeSurfaceLayout();
+    public void setVolume(int volume) {
+        mMediaPlayer.setVolume(volume);
     }
 
     @Override
@@ -356,13 +342,6 @@ public class ReactPlayerView extends FrameLayout implements
     @Override
     public void onSurfacesDestroyed(IVLCVout vout) {
 
-    }
-
-    @Override
-    public void onHardwareAccelerationError(IVLCVout vout) {
-        // Handle errors with hardware acceleration
-        this.releasePlayer();
-        Toast.makeText(getContext(), "Error with hardware acceleration", Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -393,14 +372,27 @@ public class ReactPlayerView extends FrameLayout implements
             case MediaPlayer.Event.EndReached:
                 pausedState = false;
                 eventMap.putBoolean(EVENT_PROP_END, true);
-                mEventEmitter.receiveEvent(getId(), Events.EVENT_END.toString(), eventMap);
+                mEventEmitter.receiveEvent(getId(), Events.EVENT_ENDED.toString(), eventMap);
+                break;
+            case MediaPlayer.Event.Stopped:
+                mEventEmitter.receiveEvent(getId(), Events.EVENT_STOPPED.toString(), null);
                 break;
             case MediaPlayer.Event.Playing:
-                eventMap.putDouble(EVENT_PROP_DURATION, mMediaPlayer.getLength() / 1000.0);
-                mEventEmitter.receiveEvent(getId(), Events.EVENT_DURATION.toString(), eventMap);
+                eventMap.putDouble(EVENT_PROP_DURATION, mMediaPlayer.getLength());
+                mEventEmitter.receiveEvent(getId(), Events.EVENT_PLAYING.toString(), eventMap);
+                break;
+            case MediaPlayer.Event.Buffering:
+                mEventEmitter.receiveEvent(getId(), Events.EVENT_PLAYING.toString(), null);
+                break;
+            case MediaPlayer.Event.Paused:
+                mEventEmitter.receiveEvent(getId(), Events.EVENT_PAUSED.toString(), null);
+                break;
+            case MediaPlayer.Event.EncounteredError:
+                mEventEmitter.receiveEvent(getId(), Events.EVENT_ERROR.toString(), null);
                 break;
             case MediaPlayer.Event.TimeChanged:
-                eventMap.putDouble(EVENT_PROP_CURRENT_TIME, mMediaPlayer.getTime() / 1000.0);
+                eventMap.putDouble(EVENT_PROP_CURRENT_TIME, mMediaPlayer.getTime());
+                eventMap.putDouble(EVENT_PROP_DURATION, mMediaPlayer.getLength());
                 mEventEmitter.receiveEvent(getId(), Events.EVENT_PROGRESS.toString(), eventMap);
                 break;
         }

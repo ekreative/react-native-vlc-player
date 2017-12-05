@@ -1,4 +1,4 @@
-package com.ghondar.vlcplayer;
+package com.rusmigal.vlcplayer;
 
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.JavaScriptModule;
@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class ReactPlayerPackage implements ReactPackage {
+public class VLCPlayerPackage implements ReactPackage {
 
     @Override
     public List<NativeModule> createNativeModules(ReactApplicationContext reactContext) {
@@ -24,7 +24,7 @@ public class ReactPlayerPackage implements ReactPackage {
 
     @Override
     public List<ViewManager> createViewManagers(ReactApplicationContext reactContext) {
-        return Arrays.<ViewManager>asList(new ReactPlayerViewManager());
+        return Arrays.<ViewManager>asList(new VLCPlayerViewManager());
     }
 
 }
