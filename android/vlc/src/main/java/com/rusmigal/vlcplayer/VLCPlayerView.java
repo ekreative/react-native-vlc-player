@@ -1,18 +1,16 @@
 package com.rusmigal.vlcplayer;
 
 
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.PixelFormat;
 import android.net.Uri;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.LifecycleEventListener;
@@ -73,6 +71,11 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
     // media player
     private LibVLC libvlc;
     private MediaPlayer mMediaPlayer = null;
+
+    private int mVideoVisibleHeight;
+    private int mVideoVisibleWidth;
+    private int mSarNum;
+    private int mSarDen;
     private int mVideoHeight;
     private int mVideoWidth;
 
@@ -90,24 +93,11 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
     private Media media;
     private boolean autoPlay;
 
-    public VLCPlayerView(@NonNull Context context) {
-        this(context, null);
-    }
-
-    public VLCPlayerView(@NonNull Context context, @Nullable AttributeSet attrs) {
-        this(context, attrs, 0);
-    }
-
     public VLCPlayerView(ThemedReactContext context) {
-        this(context, null, 0);
+        super(context);
         mThemedReactContext = context;
         mEventEmitter = mThemedReactContext.getJSModule(RCTEventEmitter.class);
         mThemedReactContext.addLifecycleEventListener(this);
-        initializePlayerIfNeeded();
-    }
-
-    public VLCPlayerView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
         init();
     }
 
@@ -116,6 +106,7 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
 
         mSurface = findViewById(R.id.vlc_surface);
         holder = mSurface.getHolder();
+        initializePlayerIfNeeded();
     }
 
     private void initializePlayerIfNeeded() {
@@ -143,7 +134,7 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
 
             options.add("-vv");
 
-            libvlc = new LibVLC(mThemedReactContext, options);
+            libvlc = new LibVLC(options);
 
             holder.setKeepScreenOn(true);
 
@@ -208,90 +199,90 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
         mVideoHeight = 0;
     }
 
-//    private void changeSurfaceSize() {
-//        int screenWidth = getWidth();
-//        int screenHeight = getHeight();
-//
-//        if (mMediaPlayer != null) {
-//            final IVLCVout vlcVout = mMediaPlayer.getVLCVout();
-//            vlcVout.setWindowSize(screenWidth, screenHeight);
-//        }
-//
-//        double displayWidth = screenWidth, displayHeight = screenHeight;
-//
-//        if (screenWidth < screenHeight) {
-//            displayWidth = screenHeight;
-//            displayHeight = screenWidth;
-//        }
-//
-//        // sanity check
-//        if (displayWidth * displayHeight <= 1 || mVideoWidth * mVideoHeight <= 1) {
-//            return;
-//        }
-//
-//        // compute the aspect ratio
-//        double aspectRatio, visibleWidth;
-//        if (mSarDen == mSarNum) {
-//            /* No indication about the density, assuming 1:1 */
-//            visibleWidth = mVideoVisibleWidth;
-//            aspectRatio = (double) mVideoVisibleWidth / (double) mVideoVisibleHeight;
-//        } else {
-//            /* Use the specified aspect ratio */
-//            visibleWidth = mVideoVisibleWidth * (double) mSarNum / mSarDen;
-//            aspectRatio = visibleWidth / mVideoVisibleHeight;
-//        }
-//
-//        // compute the display aspect ratio
-//        double displayAspectRatio = displayWidth / displayHeight;
-//
-//        counter++;
-//
-//        switch (mCurrentSize) {
-//            case SURFACE_BEST_FIT:
-//                if (counter > 2) if (displayAspectRatio < aspectRatio) displayHeight = displayWidth / aspectRatio;
-//                else displayWidth = displayHeight * aspectRatio;
-//                break;
-//            case SURFACE_FIT_HORIZONTAL:
-//                displayHeight = displayWidth / aspectRatio;
-//                break;
-//            case SURFACE_FIT_VERTICAL:
-//                displayWidth = displayHeight * aspectRatio;
-//                break;
-//            case SURFACE_FILL:
-//                break;
-//            case SURFACE_16_9:
-//                aspectRatio = 16.0 / 9.0;
-//                if (displayAspectRatio < aspectRatio) displayHeight = displayWidth / aspectRatio;
-//                else displayWidth = displayHeight * aspectRatio;
-//                break;
-//            case SURFACE_4_3:
-//                aspectRatio = 4.0 / 3.0;
-//                if (displayAspectRatio < aspectRatio) displayHeight = displayWidth / aspectRatio;
-//                else displayWidth = displayHeight * aspectRatio;
-//                break;
-//            case SURFACE_ORIGINAL:
-//                displayHeight = mVideoVisibleHeight;
-//                displayWidth = visibleWidth;
-//                break;
-//        }
-//
-//        // set display size
-//        int finalWidth = (int) Math.ceil(displayWidth * mVideoWidth / mVideoVisibleWidth);
-//        int finalHeight = (int) Math.ceil(displayHeight * mVideoHeight / mVideoVisibleHeight);
-//
-//        SurfaceHolder holder = mSurface.getHolder();
-//        holder.setFixedSize(finalWidth, finalHeight);
-//
-//        ViewGroup.LayoutParams lp = mSurface.getLayoutParams();
-//        lp.width = finalWidth;
-//        lp.height = finalHeight;
-//        mSurface.setLayoutParams(lp);
-//        mSurface.invalidate();
-//    }
-//
-//    private void changeSurfaceLayout() {
-//        changeSurfaceSize();
-//    }
+    private void changeSurfaceSize() {
+        int screenWidth = getWidth();
+        int screenHeight = getHeight();
+
+        if (mMediaPlayer != null) {
+            final IVLCVout vlcVout = mMediaPlayer.getVLCVout();
+            vlcVout.setWindowSize(screenWidth, screenHeight);
+        }
+
+        double displayWidth = screenWidth, displayHeight = screenHeight;
+
+        if (screenWidth < screenHeight) {
+            displayWidth = screenHeight;
+            displayHeight = screenWidth;
+        }
+
+        // sanity check
+        if (displayWidth * displayHeight <= 1 || mVideoWidth * mVideoHeight <= 1) {
+            return;
+        }
+
+        // compute the aspect ratio
+        double aspectRatio, visibleWidth;
+        if (mSarDen == mSarNum) {
+            /* No indication about the density, assuming 1:1 */
+            visibleWidth = mVideoVisibleWidth;
+            aspectRatio = (double) mVideoVisibleWidth / (double) mVideoVisibleHeight;
+        } else {
+            /* Use the specified aspect ratio */
+            visibleWidth = mVideoVisibleWidth * (double) mSarNum / mSarDen;
+            aspectRatio = visibleWidth / mVideoVisibleHeight;
+        }
+
+        // compute the display aspect ratio
+        double displayAspectRatio = displayWidth / displayHeight;
+
+        counter++;
+
+        switch (mCurrentSize) {
+            case SURFACE_BEST_FIT:
+                if (counter > 2) if (displayAspectRatio < aspectRatio) displayHeight = displayWidth / aspectRatio;
+                else displayWidth = displayHeight * aspectRatio;
+                break;
+            case SURFACE_FIT_HORIZONTAL:
+                displayHeight = displayWidth / aspectRatio;
+                break;
+            case SURFACE_FIT_VERTICAL:
+                displayWidth = displayHeight * aspectRatio;
+                break;
+            case SURFACE_FILL:
+                break;
+            case SURFACE_16_9:
+                aspectRatio = 16.0 / 9.0;
+                if (displayAspectRatio < aspectRatio) displayHeight = displayWidth / aspectRatio;
+                else displayWidth = displayHeight * aspectRatio;
+                break;
+            case SURFACE_4_3:
+                aspectRatio = 4.0 / 3.0;
+                if (displayAspectRatio < aspectRatio) displayHeight = displayWidth / aspectRatio;
+                else displayWidth = displayHeight * aspectRatio;
+                break;
+            case SURFACE_ORIGINAL:
+                displayHeight = mVideoVisibleHeight;
+                displayWidth = visibleWidth;
+                break;
+        }
+
+        // set display size
+        int finalWidth = (int) Math.ceil(displayWidth * mVideoWidth / mVideoVisibleWidth);
+        int finalHeight = (int) Math.ceil(displayHeight * mVideoHeight / mVideoVisibleHeight);
+
+        SurfaceHolder holder = mSurface.getHolder();
+        holder.setFixedSize(finalWidth, finalHeight);
+
+        ViewGroup.LayoutParams lp = mSurface.getLayoutParams();
+        lp.width = finalWidth;
+        lp.height = finalHeight;
+        mSurface.setLayoutParams(lp);
+        mSurface.invalidate();
+    }
+
+    private void changeSurfaceLayout() {
+        changeSurfaceSize();
+    }
 
     public void setFilePath(String filePath) {
         this.mSrcString = filePath;
@@ -335,6 +326,20 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
     }
 
     @Override
+    public void onNewLayout(IVLCVout vout, int width, int height, int visibleWidth, int visibleHeight, int sarNum, int sarDen) {
+        if (width * height == 0) return;
+
+        // store video size
+        mVideoWidth = width;
+        mVideoHeight = height;
+        mVideoVisibleWidth = visibleWidth;
+        mVideoVisibleHeight = visibleHeight;
+        mSarNum = sarNum;
+        mSarDen = sarDen;
+        changeSurfaceLayout();
+    }
+
+    @Override
     public void onSurfacesCreated(IVLCVout vout) {
 
     }
@@ -342,6 +347,13 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
     @Override
     public void onSurfacesDestroyed(IVLCVout vout) {
 
+    }
+
+    @Override
+    public void onHardwareAccelerationError(IVLCVout vout) {
+        // Handle errors with hardware acceleration
+        this.releasePlayer();
+        Toast.makeText(getContext(), "Error with hardware acceleration", Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -381,9 +393,9 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
                 eventMap.putDouble(EVENT_PROP_DURATION, mMediaPlayer.getLength());
                 mEventEmitter.receiveEvent(getId(), Events.EVENT_PLAYING.toString(), eventMap);
                 break;
-            case MediaPlayer.Event.Buffering:
-                mEventEmitter.receiveEvent(getId(), Events.EVENT_PLAYING.toString(), null);
-                break;
+//            case MediaPlayer.Event.Buffering:
+//                mEventEmitter.receiveEvent(getId(), Events.EVENT_PLAYING.toString(), null);
+//                break;
             case MediaPlayer.Event.Paused:
                 mEventEmitter.receiveEvent(getId(), Events.EVENT_PAUSED.toString(), null);
                 break;
