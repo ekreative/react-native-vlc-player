@@ -34,15 +34,15 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
     private boolean pausedState;
 
     public enum Events {
-        EVENT_PROGRESS("onVideoProgress"),
-        EVENT_ENDED("onVideoEnded"),
-        EVENT_STOPPED("onVideoStopped"),
-        EVENT_PLAYING("onVideoPlaying"),
-        EVENT_BUFFERING("onVideoBuffering"),
-        EVENT_PAUSED("onVideoPaused"),
-        EVENT_ERROR("onVideoError"),
-        EVENT_VOLUME_CHANGED("onVolumeChanged"),
-        EVENT_SEEK("onVideoSeek");
+        EVENT_PROGRESS("_onProgress"),
+        EVENT_ENDED("_onEnded"),
+        EVENT_STOPPED("_onStopped"),
+        EVENT_PLAYING("_onPlaying"),
+        EVENT_BUFFERING("_onBuffering"),
+        EVENT_PAUSED("_onPaused"),
+        EVENT_ERROR("_onError"),
+        EVENT_VOLUME_CHANGED("_onVolumeChanged"),
+        EVENT_SEEK("_onVideoSeek");
 
         private final String mName;
 
