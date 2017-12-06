@@ -3,15 +3,15 @@ package com.rusmigal.vlcplayer;
 
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.common.MapBuilder;
-import com.facebook.react.uimanager.SimpleViewManager;
 import com.facebook.react.uimanager.ThemedReactContext;
+import com.facebook.react.uimanager.ViewGroupManager;
 import com.facebook.react.uimanager.annotations.ReactProp;
 
 import java.util.Map;
 
 import javax.annotation.Nullable;
 
-public class VLCPlayerViewManager extends SimpleViewManager<VLCPlayerView> {
+public class VLCPlayerViewManager extends ViewGroupManager<VLCPlayerView> {
 
     public static final String REACT_CLASS = "RCTPlayer";
 
