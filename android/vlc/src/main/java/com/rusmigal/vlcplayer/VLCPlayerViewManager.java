@@ -55,8 +55,8 @@ public class VLCPlayerViewManager extends ViewGroupManager<VLCPlayerView> {
     }
 
     @ReactProp(name = PROP_VOLUME)
-    public void setVolume(final VLCPlayerView playerView, int volume) {
-        playerView.setVolume(volume);
+    public void setVolume(final VLCPlayerView playerView, float volume) {
+        playerView.setVolume((int) (300 * volume));
     }
 
     @ReactProp(name = PROP_SEEK)
