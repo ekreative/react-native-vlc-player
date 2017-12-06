@@ -103,14 +103,14 @@ export default class VLCPlayer extends Component {
     Object.assign(nativeProps, {
       style: [styles.base, nativeProps.style],
       source: source,
-      onError: this._onError,
-      onProgress: this._onProgress,
-      onEnded: this._onEnded,
-      onPlaying: this._onPlaying,
-      onPaused: this._onPaused,
-      onStopped: this._onStopped,
-      onBuffering: this._onBuffering,
-      onVolumeChanged: this._onVolumeChanged
+      onVLCError: this._onError,
+      onVLCProgress: this._onProgress,
+      onVLCEnded: this._onEnded,
+      onVLCPlaying: this._onPlaying,
+      onVLCPaused: this._onPaused,
+      onVLCStopped: this._onStopped,
+      onVLCBuffering: this._onBuffering,
+      onVLCVolumeChanged: this._onVolumeChanged
     })
 
     return (

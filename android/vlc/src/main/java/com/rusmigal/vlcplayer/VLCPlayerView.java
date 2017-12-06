@@ -32,15 +32,15 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
     private boolean pausedState;
 
     public enum Events {
-        EVENT_PROGRESS("_onProgress"),
-        EVENT_ENDED("_onEnded"),
-        EVENT_STOPPED("_onStopped"),
-        EVENT_PLAYING("_onPlaying"),
-        EVENT_BUFFERING("_onBuffering"),
-        EVENT_PAUSED("_onPaused"),
-        EVENT_ERROR("_onError"),
-        EVENT_VOLUME_CHANGED("_onVolumeChanged"),
-        EVENT_SEEK("_onVideoSeek");
+        EVENT_PROGRESS("onVLCProgress"),
+        EVENT_ENDED("onVLCEnded"),
+        EVENT_STOPPED("onVLCStopped"),
+        EVENT_PLAYING("onVLCPlaying"),
+        EVENT_BUFFERING("onVLCBuffering"),
+        EVENT_PAUSED("onVLCPaused"),
+        EVENT_ERROR("onVLCError"),
+        EVENT_VOLUME_CHANGED("onVLCVolumeChanged"),
+        EVENT_SEEK("onVLCVideoSeek");
 
         private final String mName;
 
@@ -56,6 +56,7 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
 
     public static final String EVENT_PROP_DURATION = "duration";
     public static final String EVENT_PROP_CURRENT_TIME = "currentTime";
+    public static final String EVENT_PROP_POSITION = "position";
     public static final String EVENT_PROP_END = "endReached";
     public static final String EVENT_PROP_SEEK_TIME = "seekTime";
 
@@ -405,6 +406,7 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
             case MediaPlayer.Event.TimeChanged:
                 eventMap.putDouble(EVENT_PROP_CURRENT_TIME, mMediaPlayer.getTime());
                 eventMap.putDouble(EVENT_PROP_DURATION, mMediaPlayer.getLength());
+                eventMap.putDouble(EVENT_PROP_POSITION, mMediaPlayer.getPosition());
                 mEventEmitter.receiveEvent(getId(), Events.EVENT_PROGRESS.toString(), eventMap);
                 break;
         }
