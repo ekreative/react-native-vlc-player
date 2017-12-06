@@ -34,7 +34,7 @@ Run `npm i -S react-native-vlc-player`
     ref='vlcplayer'
     paused={this.state.paused}
     style={styles.vlcplayer}
-    source={{uri: this.props.uri, initOptions:['--codec=avcodec']}}
+    source={{uri: this.props.uri, initOptions: ['--codec=avcodec']}}
     onProgress={this.onProgress.bind(this)}
     onEnded={this.onEnded.bind(this)}
     onStopped={this.onEnded.bind(this)}
@@ -44,6 +44,9 @@ Run `npm i -S react-native-vlc-player`
  />
 
 ```
+
+##### Source
+initOptions - for iOS only
 
 ## Static Methods
 

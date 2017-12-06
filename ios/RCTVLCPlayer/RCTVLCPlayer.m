@@ -63,7 +63,7 @@ static NSString *const playbackRate = @"rate";
                                              selector:@selector(applicationWillEnterForeground:)
                                                  name:UIApplicationWillEnterForegroundNotification
                                                object:nil];
-      
+
       [[NSNotificationCenter defaultCenter] addObserver:self
                                                selector:@selector(volumeChanged:)
                                                    name:@"AVSystemController_SystemVolumeDidChangeNotification"
@@ -142,37 +142,37 @@ static NSString *const playbackRate = @"rate";
     switch (state) {
         case VLCMediaPlayerStatePaused:
             _paused = YES;
-            if (self.onPaused) {
-                self.onPaused(@{ @"target": self.reactTag });
+            if (self.onVLCPaused) {
+                self.onVLCPaused(@{ @"target": self.reactTag });
             }
             break;
         case VLCMediaPlayerStateStopped:
-            if (self.onStopped) {
-                self.onStopped(@{ @"target": self.reactTag });
+            if (self.onVLCStopped) {
+                self.onVLCStopped(@{ @"target": self.reactTag });
             }
             break;
         case VLCMediaPlayerStateBuffering:
-            if (self.onBuffering) {
-                self.onBuffering(@{ @"target": self.reactTag });
+            if (self.onVLCBuffering) {
+                self.onVLCBuffering(@{ @"target": self.reactTag });
             }
             break;
         case VLCMediaPlayerStatePlaying:
             _paused = NO;
-            if (self.onPlaying) {
-                self.onPlaying(@{ @"target": self.reactTag,
+            if (self.onVLCPlaying) {
+                self.onVLCPlaying(@{ @"target": self.reactTag,
                                   @"seekable": [NSNumber numberWithBool:[self.player isSeekable]],
                                   @"duration":[NSNumber numberWithInt:[self.player.media.length intValue]] });
             }
             break;
         case VLCMediaPlayerStateEnded:
             [self.player stop];
-            if (self.onEnded) {
-                self.onEnded(@{ @"target": self.reactTag });
+            if (self.onVLCEnded) {
+                self.onVLCEnded(@{ @"target": self.reactTag });
             }
             break;
         case VLCMediaPlayerStateError:
-            if (self.onError) {
-                self.onError(@{ @"target": self.reactTag });
+            if (self.onVLCError) {
+                self.onVLCError(@{ @"target": self.reactTag });
             }
             [self _release];
             break;
@@ -186,8 +186,8 @@ static NSString *const playbackRate = @"rate";
     float volume = [[[notification userInfo] objectForKey:@"AVSystemController_AudioVolumeNotificationParameter"] floatValue];
     if (_volume != volume) {
         _volume = volume;
-        if (self.onVolumeChanged) {
-            self.onVolumeChanged(@{@"volume": [NSNumber numberWithFloat: volume]});
+        if (self.onVLCVolumeChanged) {
+            self.onVLCVolumeChanged(@{@"volume": [NSNumber numberWithFloat: volume]});
         }
     }
 }
@@ -199,8 +199,8 @@ static NSString *const playbackRate = @"rate";
     int duration      = [self.player.media.length intValue];
 
     if( currentTime >= 0 && currentTime < duration) {
-        if (self.onProgress) {
-            self.onProgress(@{ @"target": self.reactTag,
+        if (self.onVLCProgress) {
+            self.onVLCProgress(@{ @"target": self.reactTag,
                                @"currentTime": [NSNumber numberWithInt:currentTime],
                                @"remainingTime": [NSNumber numberWithInt:remainingTime],
                                @"duration":[NSNumber numberWithInt:duration],
@@ -261,4 +261,3 @@ static NSString *const playbackRate = @"rate";
 }
 
 @end
-

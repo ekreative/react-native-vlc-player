@@ -9,13 +9,13 @@
 @property (nonatomic) BOOL paused;
 @property (nonatomic) float volume;
 
-@property (nonatomic, copy) RCTDirectEventBlock onPaused;
-@property (nonatomic, copy) RCTDirectEventBlock onStopped;
-@property (nonatomic, copy) RCTDirectEventBlock onBuffering;
-@property (nonatomic, copy) RCTDirectEventBlock onPlaying;
-@property (nonatomic, copy) RCTDirectEventBlock onEnded;
-@property (nonatomic, copy) RCTDirectEventBlock onError;
-@property (nonatomic, copy) RCTDirectEventBlock onProgress;
-@property (nonatomic, copy) RCTDirectEventBlock onVolumeChanged;
+@property (nonatomic, copy) RCTDirectEventBlock onVLCPaused;
+@property (nonatomic, copy) RCTDirectEventBlock onVLCStopped;
+@property (nonatomic, copy) RCTDirectEventBlock onVLCBuffering;
+@property (nonatomic, copy) RCTDirectEventBlock onVLCPlaying;
+@property (nonatomic, copy) RCTDirectEventBlock onVLCEnded;
+@property (nonatomic, copy) RCTDirectEventBlock onVLCError;
+@property (nonatomic, copy) RCTDirectEventBlock onVLCProgress;
+@property (nonatomic, copy) RCTDirectEventBlock onVLCVolumeChanged;
 
 @end
