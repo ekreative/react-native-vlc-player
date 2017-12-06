@@ -44,9 +44,13 @@ Run `npm i -S react-native-vlc-player`
  />
 
 ```
+### Properties
+source.initOptions - only for iOS
+rate - only for iOS
+snapshotPath - only for iOS
 
-##### Source
-initOptions - for iOS only
+### Callbacks
+onBuffering - only for iOS
 
 ## Static Methods
 
