@@ -61,7 +61,7 @@ public class VLCPlayerViewManager extends ViewGroupManager<VLCPlayerView> {
 
     @ReactProp(name = PROP_SEEK)
     public void setSeek(final VLCPlayerView playerView, float seek) {
-        playerView.seekTo(seek);
+        playerView.seek(seek);
     }
 
     @ReactProp(name = PROP_PAUSED)

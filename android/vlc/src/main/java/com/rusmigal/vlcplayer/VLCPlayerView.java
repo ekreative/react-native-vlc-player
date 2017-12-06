@@ -314,12 +314,12 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
         releasePlayer();
     }
 
-    public void seekTo(float msec) {
+    public void seek(float seek) {
         WritableMap event = Arguments.createMap();
         event.putDouble(EVENT_PROP_CURRENT_TIME, mMediaPlayer.getTime());
-        event.putDouble(EVENT_PROP_SEEK_TIME, msec);
+        event.putDouble(EVENT_PROP_SEEK_TIME, seek);
         mEventEmitter.receiveEvent(getId(), Events.EVENT_SEEK.toString(), event);
-        mMediaPlayer.setTime((long) msec);
+        mMediaPlayer.setTime((long) (mMediaPlayer.getLength() * seek));
     }
 
     public void setVolume(int volume) {
