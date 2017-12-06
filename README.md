@@ -35,12 +35,12 @@ Run `npm i -S react-native-vlc-player`
     paused={this.state.paused}
     style={styles.vlcplayer}
     source={{uri: this.props.uri, initOptions: ['--codec=avcodec']}}
-    onProgress={this.onProgress.bind(this)}
-    onEnded={this.onEnded.bind(this)}
-    onStopped={this.onEnded.bind(this)}
-    onPlaying={this.onPlaying.bind(this)}
-    onBuffering={this.onBuffering.bind(this)}
-    onPaused={this.onPaused.bind(this)}
+    onVLCProgress={this.onProgress.bind(this)}
+    onVLCEnded={this.onEnded.bind(this)}
+    onVLCStopped={this.onEnded.bind(this)}
+    onVLCPlaying={this.onPlaying.bind(this)}
+    onVLCBuffering={this.onBuffering.bind(this)}
+    onVLCPaused={this.onPaused.bind(this)}
  />
 
 ```
