@@ -281,7 +281,7 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
         mSurface.invalidate();
     }
 
-    private void changeSurfaceLayout() {
+    public void changeSurfaceLayout() {
         changeSurfaceSize();
     }
 
