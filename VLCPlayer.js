@@ -25,6 +25,7 @@ export default class VLCPlayer extends Component {
     this._onStopped = this._onStopped.bind(this)
     this._onPaused = this._onPaused.bind(this)
     this._onBuffering = this._onBuffering.bind(this)
+    this._onVolumeChanged = this._onVolumeChanged.bind(this)
   }
 
   setNativeProps (nativeProps) {
@@ -44,45 +45,51 @@ export default class VLCPlayer extends Component {
   }
 
   _onBuffering (event) {
-    if (this.props.onBuffering) {
-      this.props.onBuffering(event.nativeEvent)
+    if (this.props.onVLCBuffering) {
+      this.props.onVLCBuffering(event.nativeEvent)
     }
   }
 
   _onError (event) {
-    if (this.props.onError) {
-      this.props.onError(event.nativeEvent)
+    if (this.props.onVLCError) {
+      this.props.onVLCError(event.nativeEvent)
     }
   }
 
   _onProgress (event) {
-    if (this.props.onProgress) {
-      this.props.onProgress(event.nativeEvent)
+    if (this.props.onVLCProgress) {
+      this.props.onVLCProgress(event.nativeEvent)
     }
   }
 
   _onEnded (event) {
-    if (this.props.onEnded) {
-      this.props.onEnded(event.nativeEvent)
+    if (this.props.onVLCEnded) {
+      this.props.onVLCEnded(event.nativeEvent)
     }
   }
 
   _onStopped (event) {
     this.setNativeProps({ paused: true })
-    if (this.props.onStopped) {
-      this.props.onStopped(event.nativeEvent)
+    if (this.props.onVLCStopped) {
+      this.props.onVLCStopped(event.nativeEvent)
     }
   }
 
   _onPaused (event) {
-    if (this.props.onPaused) {
-      this.props.onPaused(event.nativeEvent)
+    if (this.props.onVLCPaused) {
+      this.props.onVLCPaused(event.nativeEvent)
     }
   }
 
   _onPlaying (event) {
-    if (this.props.onPlaying) {
-      this.props.onPlaying(event.nativeEvent)
+    if (this.props.onVLCPlaying) {
+      this.props.onVLCPlaying(event.nativeEvent)
+    }
+  }
+
+  _onVolumeChanged (event) {
+    if (this.props.onVLCVolumeChanged) {
+      this.props.onVLCVolumeChanged(event.nativeEvent)
     }
   }
 
@@ -92,18 +99,18 @@ export default class VLCPlayer extends Component {
     } = this.props
     source.initOptions = source.initOptions || []
     // repeat the input media
-    source.initOptions.push('--input-repeat=1000')
     const nativeProps = Object.assign({}, this.props)
     Object.assign(nativeProps, {
       style: [styles.base, nativeProps.style],
       source: source,
-      onError: this._onError,
-      onProgress: this._onProgress,
-      onEnded: this._onEnded,
-      onPlaying: this._onPlaying,
-      onPaused: this._onPaused,
-      onStopped: this._onStopped,
-      onBuffering: this._onBuffering
+      onVLCError: this._onError,
+      onVLCProgress: this._onProgress,
+      onVLCEnded: this._onEnded,
+      onVLCPlaying: this._onPlaying,
+      onVLCPaused: this._onPaused,
+      onVLCStopped: this._onStopped,
+      onVLCBuffering: this._onBuffering,
+      onVLCVolumeChanged: this._onVolumeChanged
     })
 
     return (
@@ -120,15 +127,17 @@ VLCPlayer.propTypes = {
   paused: PropTypes.bool,
   seek: PropTypes.number,
   rate: PropTypes.number,
+  volume: PropTypes.number,
   snapshotPath: PropTypes.string,
 
-  onPaused: PropTypes.func,
-  onStopped: PropTypes.func,
-  onBuffering: PropTypes.func,
-  onPlaying: PropTypes.func,
-  onEnded: PropTypes.func,
-  onError: PropTypes.func,
-  onProgress: PropTypes.func,
+  onVLCPaused: PropTypes.func,
+  onVLCStopped: PropTypes.func,
+  onVLCBuffering: PropTypes.func,
+  onVLCPlaying: PropTypes.func,
+  onVLCEnded: PropTypes.func,
+  onVLCError: PropTypes.func,
+  onVLCProgress: PropTypes.func,
+  onVLCVolumeChanged: PropTypes.func,
 
   /* Required by react-native */
   scaleX: PropTypes.number,

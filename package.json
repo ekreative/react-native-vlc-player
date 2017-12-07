@@ -9,14 +9,6 @@
     "video",
     "player"
   ],
-  "files": [
-    "ios/RCTVLCPlayer.xcodeproj",
-    "ios/RCTVLCPlayer/RCTVLCPlayer.h",
-    "ios/RCTVLCPlayer/RCTVLCPlayer.m",
-    "ios/RCTVLCPlayer/RCTVLCPlayerManager.h",
-    "ios/RCTVLCPlayer/RCTVLCPlayerManager.m",
-    "VLCPlayer.js"
-  ],
   "scripts": {
     "test:fix": "standard --fix"
   },

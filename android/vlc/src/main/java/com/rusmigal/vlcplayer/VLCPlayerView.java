@@ -32,15 +32,15 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
     private boolean pausedState;
 
     public enum Events {
-        EVENT_PROGRESS("onProgress"),
-        EVENT_ENDED("onEnded"),
-        EVENT_STOPPED("onStopped"),
-        EVENT_PLAYING("onPlaying"),
-        EVENT_BUFFERING("onBuffering"),
-        EVENT_PAUSED("onPaused"),
-        EVENT_ERROR("onError"),
-        EVENT_VOLUME_CHANGED("onVolumeChanged"),
-        EVENT_SEEK("onVideoSeek");
+        EVENT_PROGRESS("onVLCProgress"),
+        EVENT_ENDED("onVLCEnded"),
+        EVENT_STOPPED("onVLCStopped"),
+        EVENT_PLAYING("onVLCPlaying"),
+        EVENT_BUFFERING("onVLCBuffering"),
+        EVENT_PAUSED("onVLCPaused"),
+        EVENT_ERROR("onVLCError"),
+        EVENT_VOLUME_CHANGED("onVLCVolumeChanged"),
+        EVENT_SEEK("onVLCVideoSeek");
 
         private final String mName;
 
@@ -56,6 +56,7 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
 
     public static final String EVENT_PROP_DURATION = "duration";
     public static final String EVENT_PROP_CURRENT_TIME = "currentTime";
+    public static final String EVENT_PROP_POSITION = "position";
     public static final String EVENT_PROP_END = "endReached";
     public static final String EVENT_PROP_SEEK_TIME = "seekTime";
 
@@ -104,7 +105,7 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
     private void init() {
         inflate(getContext(), R.layout.player, this);
 
-        mSurface = findViewById(R.id.vlc_surface);
+        mSurface = (SurfaceView) findViewById(R.id.vlc_surface);
         holder = mSurface.getHolder();
         initializePlayerIfNeeded();
     }
@@ -313,12 +314,12 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
         releasePlayer();
     }
 
-    public void seekTo(float msec) {
+    public void seek(float seek) {
         WritableMap event = Arguments.createMap();
         event.putDouble(EVENT_PROP_CURRENT_TIME, mMediaPlayer.getTime());
-        event.putDouble(EVENT_PROP_SEEK_TIME, msec);
+        event.putDouble(EVENT_PROP_SEEK_TIME, seek);
         mEventEmitter.receiveEvent(getId(), Events.EVENT_SEEK.toString(), event);
-        mMediaPlayer.setTime((long) msec);
+        mMediaPlayer.setTime((long) (mMediaPlayer.getLength() * seek));
     }
 
     public void setVolume(int volume) {
@@ -405,6 +406,7 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
             case MediaPlayer.Event.TimeChanged:
                 eventMap.putDouble(EVENT_PROP_CURRENT_TIME, mMediaPlayer.getTime());
                 eventMap.putDouble(EVENT_PROP_DURATION, mMediaPlayer.getLength());
+                eventMap.putDouble(EVENT_PROP_POSITION, mMediaPlayer.getPosition());
                 mEventEmitter.receiveEvent(getId(), Events.EVENT_PROGRESS.toString(), eventMap);
                 break;
         }

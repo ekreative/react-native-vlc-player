@@ -3,6 +3,8 @@
 #import "React/RCTBridgeModule.h"
 #import "React/RCTEventDispatcher.h"
 #import "UIView+React.h"
+#import <MediaPlayer/MediaPlayer.h>
+#import <AVFoundation/AVFoundation.h>
 #import <MobileVLCKit.h>
 
 static NSString *const statusKeyPath = @"status";
@@ -11,18 +13,46 @@ static NSString *const playbackBufferEmptyKeyPath = @"playbackBufferEmpty";
 static NSString *const readyForDisplayKeyPath = @"readyForDisplay";
 static NSString *const playbackRate = @"rate";
 
+@interface MPVolumeView()
+
+@property (nonatomic, readonly) UISlider *volumeSlider;
+
+@end
+
+@implementation MPVolumeView (private_volume)
+
+- (UISlider*)volumeSlider {
+    for(id view in self.subviews) {
+        if ([view isKindOfClass:[UISlider class]]) {
+            UISlider *slider = (UISlider*)view;
+            slider.continuous = NO;
+            slider.value = AVAudioSession.sharedInstance.outputVolume;
+            return slider;
+        }
+    }
+    return nil;
+}
+
+@end
+
+
 @interface RCTVLCPlayer()<VLCMediaPlayerDelegate>
 
-@property (nonatomic, weak) VLCMediaPlayer *player;
+@property (nonatomic) UISlider *volumeSlider;
+@property (nonatomic, strong) VLCMediaPlayer *player;
 
 @end
 
 
 @implementation RCTVLCPlayer
 
+@synthesize volume = _volume;
+
 
 - (id)initWithPlayer:(VLCMediaPlayer*)player {
   if (self = [super init]) {
+      _volume = -1.0;
+      self.volumeSlider = [[[MPVolumeView alloc] init] volumeSlider];
       self.player = player;
       [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(applicationWillResignActive:)
@@ -33,6 +63,11 @@ static NSString *const playbackRate = @"rate";
                                              selector:@selector(applicationWillEnterForeground:)
                                                  name:UIApplicationWillEnterForegroundNotification
                                                object:nil];
+
+      [[NSNotificationCenter defaultCenter] addObserver:self
+                                               selector:@selector(volumeChanged:)
+                                                   name:@"AVSystemController_SystemVolumeDidChangeNotification"
+                                                 object:nil];
 
   }
   return self;
@@ -65,13 +100,26 @@ static NSString *const playbackRate = @"rate";
 }
 
 
+- (void)setVolume:(float)volume {
+    if ((_volume != volume)) {
+        _volume = volume;
+        self.volumeSlider.value = volume;
+    }
+}
+
+
+- (float)volume {
+    return self.volumeSlider.value;
+}
+
+
 - (void)setSource:(NSDictionary *)source {
     if(self.player) {
         [self.player pause];
         self.player.drawable = nil;
         self.player.delegate = nil;
     }
-    
+
     NSString* uri    = [source objectForKey:@"uri"];
     BOOL    autoplay = [RCTConvert BOOL:[source objectForKey:@"autoplay"]];
     NSURL* _uri    = [NSURL URLWithString:uri];
@@ -80,7 +128,6 @@ static NSString *const playbackRate = @"rate";
     [self.player setDrawable:self];
     self.player.delegate = self;
     self.player.media = [VLCMedia mediaWithURL:_uri];
-    
     [self setPaused:!autoplay];
 }
 
@@ -95,41 +142,53 @@ static NSString *const playbackRate = @"rate";
     switch (state) {
         case VLCMediaPlayerStatePaused:
             _paused = YES;
-            if (self.onPaused) {
-                self.onPaused(@{ @"target": self.reactTag });
+            if (self.onVLCPaused) {
+                self.onVLCPaused(@{ @"target": self.reactTag });
             }
             break;
         case VLCMediaPlayerStateStopped:
-            if (self.onStopped) {
-                self.onStopped(@{ @"target": self.reactTag });
+            if (self.onVLCStopped) {
+                self.onVLCStopped(@{ @"target": self.reactTag });
             }
             break;
         case VLCMediaPlayerStateBuffering:
-            if (self.onBuffering) {
-                self.onBuffering(@{ @"target": self.reactTag });
+            if (self.onVLCBuffering) {
+                self.onVLCBuffering(@{ @"target": self.reactTag });
             }
             break;
         case VLCMediaPlayerStatePlaying:
             _paused = NO;
-            if (self.onPlaying) {
-                self.onPlaying(@{ @"target": self.reactTag,
+            if (self.onVLCPlaying) {
+                self.onVLCPlaying(@{ @"target": self.reactTag,
                                   @"seekable": [NSNumber numberWithBool:[self.player isSeekable]],
                                   @"duration":[NSNumber numberWithInt:[self.player.media.length intValue]] });
             }
             break;
         case VLCMediaPlayerStateEnded:
-            if (self.onEnded) {
-                self.onEnded(@{ @"target": self.reactTag });
+            [self.player stop];
+            if (self.onVLCEnded) {
+                self.onVLCEnded(@{ @"target": self.reactTag });
             }
             break;
         case VLCMediaPlayerStateError:
-            if (self.onError) {
-                self.onError(@{ @"target": self.reactTag });
+            if (self.onVLCError) {
+                self.onVLCError(@{ @"target": self.reactTag });
             }
             [self _release];
             break;
         default:
             break;
+    }
+}
+
+
+- (void)volumeChanged:(NSNotification *)notification {
+    float volume = [[[notification userInfo] objectForKey:@"AVSystemController_AudioVolumeNotificationParameter"] floatValue];
+    if (_volume != volume) {
+        _volume = volume;
+        if (self.onVLCVolumeChanged) {
+            self.onVLCVolumeChanged(@{@"volume": [NSNumber numberWithFloat: volume]});
+        }
     }
 }
 
@@ -140,8 +199,8 @@ static NSString *const playbackRate = @"rate";
     int duration      = [self.player.media.length intValue];
 
     if( currentTime >= 0 && currentTime < duration) {
-        if (self.onProgress) {
-            self.onProgress(@{ @"target": self.reactTag,
+        if (self.onVLCProgress) {
+            self.onVLCProgress(@{ @"target": self.reactTag,
                                @"currentTime": [NSNumber numberWithInt:currentTime],
                                @"remainingTime": [NSNumber numberWithInt:remainingTime],
                                @"duration":[NSNumber numberWithInt:duration],
@@ -167,7 +226,7 @@ static NSString *const playbackRate = @"rate";
 
 - (void)setSeek:(float)pos {
     if([self.player isSeekable]) {
-        if(pos>=0 && pos <= 1){
+        if(pos >= 0 && pos <= 1.0) {
             [self.player setPosition:pos];
         }
     }
@@ -190,13 +249,15 @@ static NSString *const playbackRate = @"rate";
     [self.player stop];
     self.player.drawable = nil;
     self.player.delegate = nil;
+    self.player = nil;
 }
 
 
 #pragma mark - Lifecycle
 - (void)removeFromSuperview {
     [self _release];
-   [super removeFromSuperview];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [super removeFromSuperview];
 }
 
 @end

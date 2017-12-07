@@ -3,6 +3,7 @@ package com.rusmigal.vlcplayer;
 
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.common.MapBuilder;
+import com.facebook.react.uimanager.ViewGroupManager;
 import com.facebook.react.uimanager.ThemedReactContext;
 import com.facebook.react.uimanager.ViewGroupManager;
 import com.facebook.react.uimanager.annotations.ReactProp;
@@ -13,9 +14,9 @@ import javax.annotation.Nullable;
 
 public class VLCPlayerViewManager extends ViewGroupManager<VLCPlayerView> {
 
-    public static final String REACT_CLASS = "RCTPlayer";
+    public static final String REACT_CLASS = "RCTVLCPlayer";
 
-    public static final String PROP_PATH = "path";
+    public static final String PROP_SOURCE = "source";
     public static final String PROP_SEEK = "seek";
     public static final String PROP_PAUSED = "paused";
     public static final String PROP_VOLUME = "volume";
@@ -47,7 +48,7 @@ public class VLCPlayerViewManager extends ViewGroupManager<VLCPlayerView> {
         return builder.build();
     }
 
-    @ReactProp(name = PROP_PATH)
+    @ReactProp(name = PROP_SOURCE)
     public void setPath(final VLCPlayerView playerView, ReadableMap map) {
         String path = map.getString("uri");
         boolean autoPlay = map.getBoolean("autoplay");
@@ -56,13 +57,13 @@ public class VLCPlayerViewManager extends ViewGroupManager<VLCPlayerView> {
     }
 
     @ReactProp(name = PROP_VOLUME)
-    public void setVolume(final VLCPlayerView playerView, int volume) {
-        playerView.setVolume(volume);
+    public void setVolume(final VLCPlayerView playerView, float volume) {
+        playerView.setVolume((int) (300 * volume));
     }
 
     @ReactProp(name = PROP_SEEK)
     public void setSeek(final VLCPlayerView playerView, float seek) {
-        playerView.seekTo(seek);
+        playerView.seek(seek);
     }
 
     @ReactProp(name = PROP_PAUSED)
