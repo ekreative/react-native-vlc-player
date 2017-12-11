@@ -71,7 +71,9 @@ public class VLCPlayerViewManager extends ViewGroupManager<VLCPlayerView> {
     }
 
     @ReactProp(name = PROP_RESIZE)
-    public void resize(final VLCPlayerView playerView) {
-        playerView.changeSurfaceLayout();
+    public void resize(final VLCPlayerView playerView, ReadableMap resize) {
+        int width = resize.getInt("width");
+        int height = resize.getInt("height");
+        playerView.changeSurfaceLayout(width, height);
     }
 }
