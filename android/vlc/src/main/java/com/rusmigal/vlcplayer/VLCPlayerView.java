@@ -200,9 +200,13 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
         mVideoHeight = 0;
     }
 
-    private void changeSurfaceSize() {
-        int screenWidth = getWidth();
-        int screenHeight = getHeight();
+    private void changeSurfaceSize(int width, int height) {
+        int screenWidth = width;
+        int screenHeight = height;
+        mVideoWidth = width;
+        mVideoHeight = height;
+        mVideoVisibleWidth = width;
+        mVideoVisibleHeight = height;
 
         if (mMediaPlayer != null) {
             final IVLCVout vlcVout = mMediaPlayer.getVLCVout();
@@ -281,8 +285,8 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
         mSurface.invalidate();
     }
 
-    private void changeSurfaceLayout() {
-        changeSurfaceSize();
+    public void changeSurfaceLayout(int width, int height) {
+        changeSurfaceSize(width, height);
     }
 
     public void setFilePath(String filePath) {
@@ -331,13 +335,9 @@ public class VLCPlayerView extends FrameLayout implements IVLCVout.Callback, Lif
         if (width * height == 0) return;
 
         // store video size
-        mVideoWidth = width;
-        mVideoHeight = height;
-        mVideoVisibleWidth = visibleWidth;
-        mVideoVisibleHeight = visibleHeight;
         mSarNum = sarNum;
         mSarDen = sarDen;
-        changeSurfaceLayout();
+        changeSurfaceLayout(width, height);
     }
 
     @Override

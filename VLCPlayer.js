@@ -126,6 +126,7 @@ VLCPlayer.propTypes = {
   /* Native only */
   paused: PropTypes.bool,
   seek: PropTypes.number,
+  resize: PropTypes.object,
   rate: PropTypes.number,
   volume: PropTypes.number,
   snapshotPath: PropTypes.string,

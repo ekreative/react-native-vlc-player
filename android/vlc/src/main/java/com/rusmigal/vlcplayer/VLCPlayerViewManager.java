@@ -19,6 +19,7 @@ public class VLCPlayerViewManager extends ViewGroupManager<VLCPlayerView> {
     public static final String PROP_SEEK = "seek";
     public static final String PROP_PAUSED = "paused";
     public static final String PROP_VOLUME = "volume";
+    public static final String PROP_RESIZE = "resize";
 
     @Override
     public String getName() {
@@ -67,5 +68,12 @@ public class VLCPlayerViewManager extends ViewGroupManager<VLCPlayerView> {
     @ReactProp(name = PROP_PAUSED)
     public void setPaused(final VLCPlayerView playerView, boolean paused) {
         playerView.setPaused(paused);
+    }
+
+    @ReactProp(name = PROP_RESIZE)
+    public void resize(final VLCPlayerView playerView, ReadableMap resize) {
+        int width = resize.getInt("width");
+        int height = resize.getInt("height");
+        playerView.changeSurfaceLayout(width, height);
     }
 }
