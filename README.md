@@ -6,7 +6,7 @@ Based on [react-native-vlcplayer](https://github.com/xiongchuan86/react-native-v
 
 ### Add it to your project
 
-Run `npm i -S react-native-vlc-player`
+Run `npm i -S https://github.com/kikill95/react-native-vlc-player.git`
 
 #### iOS
 
